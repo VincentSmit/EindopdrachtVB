@@ -15,7 +15,9 @@ tokens {
     RBLOCK = ']';
     LCURLY = '{';
     RCURLY = '}';
-    COMMA = ',' ;
+    COMMA = ',';
+    DOUBLE_QUOTE = '"';
+    SINGLE_QUOTE = '\'';
     BODY = 'body';
 
     // operators
@@ -50,24 +52,24 @@ tokens {
     RETURNS = 'returns';
     FUNC = 'func';
     ARGS = 'args';
+    VAR = 'var';
 
     // Type keywords
     INTEGER = 'int';
     CHARACTER = 'char';
     BOOLEAN = 'bool';
     ARRAY = 'array';
+    CALL = 'call';
 }
 
 @lexer::header {
-    package vb.week4.calc;
 }
 
 @header {
-    package vb.week4.calc;
 }
 
 // Parser rules
-program: import_statement* command+;
+program: import_statement* command+ -> ^(PROGRAM import_statement* command+);
 
 import_statement: FROM IDENTIFIER IMPORT IDENTIFIER SEMICOLON
                       -> ^(IMPORT IDENTIFIER IDENTIFIER);
@@ -82,10 +84,11 @@ declaration:
     var_declaration; //|
 //    scope_declaration;
 
-var_declaration:
-   type IDENTIFIER assignment? SEMICOLON;
+var_declaration: 
+   type IDENTIFIER assignment? SEMICOLON
+       -> ^(type IDENTIFIER assignment?);
 
-assignment: ASSIGN expression;
+assignment: ASSIGN! expression;
 
 scope_declaration: 
     func_declaration; // |
@@ -110,12 +113,16 @@ statement:
     while_statement |
     return_statement |
     for_statement |
-    BREAK SEMICOLON |
-    CONTINUE SEMICOLON;
+    BREAK SEMICOLON! |
+    CONTINUE SEMICOLON!;
 
-if_statement:
-    IF LPAREN! expression RPAREN! LCURLY! command* RCURLY!
-    ELSE LCURLY! command* RCURLY!;
+if_part: IF LPAREN expression RPAREN LCURLY (command SEMICOLON)* RCURLY
+             -> expression command*;
+
+else_part: ELSE LCURLY (command SEMICOLON)* RCURLY
+             -> command*;
+
+if_statement: if_part else_part? -> ^(IF if_part ELSE else_part?);
 
 while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
                      -> ^(WHILE expression command*);
@@ -129,16 +136,27 @@ return_statement: RETURN expression SEMICOLON!;
 // *, /
 // +, -
 // <=, >=, <, >, ==, !=
-expression: expressionLO | array_literal;
+expression:
+    expressionLO |
+    array_literal |
+    call_expression;
 expressionLO: expressionPM ((LT^ | GT^ | LTE^ | GTE^ | EQ^ | NEQ^) expressionPM)*;
 expressionPM: expressionMD ((PLUS^ | MINUS^) expressionMD)*;
 expressionMD: expressionPW ((MULTIPL^ | DIVIDES^) expressionPW)*;
 expressionPW: operand (POWER operand)*;
 
+call_expression: CALL IDENTIFIER LPAREN expression* RPAREN;
+
 operand:
     LPAREN! expression RPAREN! |
     IDENTIFIER |
-    NUMBER;
+    NUMBER |
+    STRING_VALUE;
+
+string:
+    DOUBLE_QUOTE IDENTIFIER DOUBLE_QUOTE -> ^(STRING IDENTIFIER)|
+    SINGLE_QUOTE IDENTIFIER SINGLE_QUOTE -> ^(STRING IDENTIFIER);
+
 
 array_literal: LBLOCK! array_value_list? RBLOCK!;
 array_value_list: expression (COMMA! array_value_list)?;
@@ -151,6 +169,8 @@ primitive_type: INTEGER | BOOLEAN | CHARACTER;
 
 // Lexer rules
 IDENTIFIER: LETTER (LETTER | DIGIT)*;
+STRING_VALUE:  '\'' ( '\\' '\''? | ~('\\' | '\'') )* '\'';
+
 NUMBER: DIGIT+;
 COMMENT: '//' .* '\n' { $channel=HIDDEN; };
 WS: (' ' | '\t' | '\f' | '\r' | '\n')+ { $channel=HIDDEN; };
