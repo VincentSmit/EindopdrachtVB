@@ -79,10 +79,12 @@ command:
     expression |
     statement;
 
+commands: command command?;
+
 // DECLARATIONS 
 declaration:
-    var_declaration; //|
-//    scope_declaration;
+    var_declaration |
+    scope_declaration;
 
 var_declaration: 
    type IDENTIFIER assignment? SEMICOLON
@@ -94,9 +96,8 @@ scope_declaration:
     func_declaration; // |
 //    class_declaration;
 
-func_scope: LCURLY command* RCURLY;
-func_declaration: FUNC IDENTIFIER LPAREN arguments RPAREN RETURNS type func_scope
-                      -> ^(FUNC IDENTIFIER type func_scope ARGS arguments BODY func_scope);
+func_declaration: FUNC IDENTIFIER LPAREN arguments RPAREN RETURNS type LCURLY commands? RCURLY
+                      -> ^(FUNC IDENTIFIER type ^(ARGS arguments) ^(BODY commands?));
 
 
 //class_scope: LCURLY declaration* RCURLY;
@@ -153,14 +154,8 @@ operand:
     NUMBER |
     STRING_VALUE;
 
-string:
-    DOUBLE_QUOTE IDENTIFIER DOUBLE_QUOTE -> ^(STRING IDENTIFIER)|
-    SINGLE_QUOTE IDENTIFIER SINGLE_QUOTE -> ^(STRING IDENTIFIER);
-
-
 array_literal: LBLOCK! array_value_list? RBLOCK!;
 array_value_list: expression (COMMA! array_value_list)?;
-
 
 // Types
 type: primitive_type; //| composite_type;
