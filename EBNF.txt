@@ -16,8 +16,9 @@ ClassScope		:=	LCURLY Declaration* RCURLY
 
 Argument		:=	TYPE IDENTIFIER (COMMA Argument)?
 
-Expression		:=	ExpressionLO
+Expression		:=	ExpressionAO
 				|	ArrayLiteral
+ExpressionAO	:=	ExpresseionLO (AND expressionLO | OR expressionLO)
 ExpressionLO	:= 	ExpressionPM ((LT^ | GT^ | LTE^ | GTE^ | EQ^ | NEQ^) ExpressionPM)*
 ExpressionPM	:= 	ExpressionMD ((PLUS^ | MINUS^) ExpressionMD)*
 ExpressionMD    :=	ExpressionPW ((MULTIPL^ | DIVIDES^) ExpressionPW)*

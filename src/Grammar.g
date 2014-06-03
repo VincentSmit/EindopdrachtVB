@@ -33,6 +33,8 @@ tokens {
     EQ = '==';
     NEQ = '!=';
     ASSIGN = '=';
+    OR = '||';
+    AND = '&&';
 
     // keywords
     PROGRAM = 'program';
@@ -136,11 +138,12 @@ return_statement: RETURN expression SEMICOLON!;
 // ^
 // *, /
 // +, -
-// <=, >=, <, >, ==, !=
+// <=, >=, <, >, ==, !=, ||, &&
 expression:
-    expressionLO |
+    expressionAO |
     array_literal |
     call_expression;
+expressionAO: expressionLO (AND expressionLO | OR expressionLO)*;
 expressionLO: expressionPM ((LT^ | GT^ | LTE^ | GTE^ | EQ^ | NEQ^) expressionPM)*;
 expressionPM: expressionMD ((PLUS^ | MINUS^) expressionMD)*;
 expressionMD: expressionPW ((MULTIPL^ | DIVIDES^) expressionPW)*;
