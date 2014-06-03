@@ -37,7 +37,7 @@ class GrammarTest(AntlrTest):
         self.assertEqual("", stderr)
 
     def test_array_declaration(self):
-        stdout, stderr = self.compile(r"array int [7] a;")
+        stdout, stderr = self.compile(r"array int [7+3] a;")
         print('wtf')
         print(stdout)
         print(stderr)
