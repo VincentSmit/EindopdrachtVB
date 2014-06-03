@@ -160,7 +160,7 @@ array_value_list: expression (COMMA! array_value_list)?;
 // Types
 type: primitive_type | composite_type;
 primitive_type: INTEGER | BOOLEAN | CHARACTER;
-composite_type: ARRAY primitive_type LBLOCK expression RBLOCK;
+composite_type: ARRAY primitive_type LBLOCK! expression RBLOCK!;
 
 // Lexer rules
 IDENTIFIER: LETTER (LETTER | DIGIT)*;

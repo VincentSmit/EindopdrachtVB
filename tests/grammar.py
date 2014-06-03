@@ -38,7 +38,7 @@ class GrammarTest(AntlrTest):
 
     def test_array_declaration(self):
         stdout, stderr = self.compile(r"array int[3/2] a;")
-        self.assertEqual("(PROGRAM (VAR array int [ (/ 3 2) ] a))", stdout)
+        self.assertEqual("(PROGRAM (VAR array int (/ 3 2) a))", stdout)
         self.assertEqual("", stderr)
 
 
