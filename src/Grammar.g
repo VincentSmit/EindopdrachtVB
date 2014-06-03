@@ -53,6 +53,7 @@ tokens {
     FUNC = 'func';
     ARGS = 'args';
     VAR = 'var';
+    OF = 'of';
 
     // Type keywords
     INTEGER = 'int';
@@ -154,13 +155,14 @@ operand:
     NUMBER |
     STRING_VALUE;
 
-array_literal: LBLOCK! array_value_list? RBLOCK!;
+array_literal: LBLOCK array_value_list? RBLOCK -> ^(ARRAY array_value_list?);
 array_value_list: expression (COMMA! array_value_list)?;
 
 // Types
-type: primitive_type; //| composite_type;
+type: primitive_type | composite_type;
 primitive_type: INTEGER | BOOLEAN | CHARACTER;
-//composite_type: ^ARRAY primitive_type LBLOCK! expression RBLOCK!;
+composite_type: ARRAY primitive_type LBLOCK expression RBLOCK
+                    -> ^(ARRAY primitive_type expression);
 
 // Lexer rules
 IDENTIFIER: LETTER (LETTER | DIGIT)*;

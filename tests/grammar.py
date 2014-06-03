@@ -27,8 +27,22 @@ class GrammarTest(AntlrTest):
 
     def test_function_declaration(self):
         stdout, stderr = self.compile(r"func foo(int a, char b) returns bool{}")
+        self.assertEqual("(PROGRAM (func foo bool (ARGS int a char b) BODY))", stdout)
+        self.assertEqual("", stderr)
+
+    def test_array_literal(self):
+        # This is wrong of course (types don't match), but we don't run a checker yet
+        stdout, stderr = self.compile(r"int a = [1, 2, 3];")
+        self.assertEqual("(PROGRAM (int a (ARRAY 1 2 3)))", stdout)
+        self.assertEqual("", stderr)
+
+    def test_array_declaration(self):
+        stdout, stderr = self.compile(r"array int [7] a;")
+        print('wtf')
         print(stdout)
         print(stderr)
+
+
 
 
 if __name__ == '__main__':
