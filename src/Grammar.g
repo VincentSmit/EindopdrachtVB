@@ -130,7 +130,7 @@ else_part: ELSE LCURLY (command SEMICOLON)* RCURLY
 
 if_statement: if_part else_part? -> ^(IF if_part ELSE else_part?);
 
-while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
+while_statement: WHILE LPAREN expression RPAREN LCURLY (command SEMICOLON)* RCURLY
                      -> ^(WHILE expression command*);
 for_statement: FOR LPAREN IDENTIFIER IN expression RPAREN LCURLY command* RCURLY
                    -> ^(FOR IDENTIFIER expression command*);
@@ -174,7 +174,8 @@ type:
     primitive_type;
 
 primitive_type: INTEGER | BOOLEAN | CHARACTER;
-composite_type: ARRAY primitive_type LBLOCK! expression RBLOCK!;
+composite_type: primitive_type LBLOCK expression RBLOCK
+                    -> ^(ARRAY primitive_type expression);
 
 // Lexer rules
 IDENTIFIER: LETTER (LETTER | DIGIT)*;

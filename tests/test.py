@@ -62,14 +62,17 @@ class AntlrTest(unittest.TestCase):
         compile_grammar()
         print("Testing %s" % cls.__name__)
 
-    def compile(self, grammar):
+    def get_ast(self, grammar):
+        return self.compile(grammar, ("-ast",))
+
+    def compile(self, grammar, opts=()):
         with set_cwd(GRAMMAR_DIR):
             with NamedTemporaryFile() as fp:
                 fp.write(grammar.encode('utf-8'))
                 fp.flush()
 
-                args = ("java", "-classpath", CLASSPATH, "Grammar", fp.name)
-                process = subprocess.Popen(args, stdout=PIPE, stderr=PIPE)
+                args = ("java", "-classpath", CLASSPATH, "Grammar")
+                process = subprocess.Popen(args + tuple(opts) + (fp.name,), stdout=PIPE, stderr=PIPE)
                 stdout, stderr = process.communicate()
 
                 return stdout.decode("utf-8").strip(), stderr.decode("utf-8").strip()

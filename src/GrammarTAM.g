@@ -15,15 +15,40 @@ import java.util.List;
 @members {
     // Used to determine at which position on the stack a variable is kept.
     private List<String> vars = new ArrayList<String>();
+    private String label;
+    private String comment;
 
     public void emit(String s){
-        System.out.println(s);
+        // Print label
+        if(label != null){
+            System.out.print(label);
+            for (int i=label.length(); i < 10; i++) System.out.print(' ');
+        } else {
+            for (int i=0; i < 10; i++) System.out.print(' ');
+        }
+
+        // Print command
+        System.out.print(s);
+
+        // Print comment
+        if (comment != null){
+            for (int i=s.length(); i < 30; i++) System.out.print(' ');
+            System.out.print("; ");
+            System.out.print(comment);
+        }
+
+        this.comment = null;
+        this.label = null;
+        System.out.println("");
     }
 
     public void emit(String s, String comment){
-        System.out.print(s);
-        System.out.print(" ;");
-        System.out.println(comment);
+        this.comment = comment;
+        emit(s);
+    }
+
+    public void emitLabel(String s, int ix){
+        this.label = s + ix + ":";
     }
 
     private void var(String s){
@@ -37,14 +62,26 @@ import java.util.List;
 }
 
 program: ^(PROGRAM import_statement* command+){
-  System.out.println("HALT");
+    emit("HALT");
 };
     
 import_statement: ^(IMPORT from=IDENTIFIER imprt=IDENTIFIER);
 command: declaration | statement;
 
 declaration: var_declaration;
-statement: assignment;
+statement:
+    assignment |
+    while_statement;
+
+while_statement
+@init{ int ix = input.index(); emitLabel("DO", ix); }:
+    ^(WHILE expression {
+        emit("JUMPIF(0) AFTER" + ix + "[CB]");
+    } command*){
+        emit("JUMP DO" + ix + "[CB]");
+        emitLabel("AFTER", ix);
+    };
+
 
 var_declaration: 
     ^(VAR type id=IDENTIFIER){ var($id.text); };
@@ -74,7 +111,7 @@ expression:
 
 operand: 
     id=IDENTIFIER{
-        emit("LOAD " + addr($id.text));
+        emit("LOAD " + addr($id.text), $id.text);
     } |
     n=NUMBER{
         emit("LOADL " + $n.text);
