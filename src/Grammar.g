@@ -87,9 +87,8 @@ declaration:
     var_declaration |
     scope_declaration;
 
-var_declaration: 
-   type IDENTIFIER assignment? SEMICOLON
-       -> ^(type IDENTIFIER assignment?);
+var_declaration: type IDENTIFIER assignment? SEMICOLON
+                     -> ^(VAR type IDENTIFIER assignment?);
 
 assignment: ASSIGN! expression;
 
@@ -161,8 +160,7 @@ array_value_list: expression (COMMA! array_value_list)?;
 // Types
 type: primitive_type | composite_type;
 primitive_type: INTEGER | BOOLEAN | CHARACTER;
-composite_type: ARRAY primitive_type LBLOCK expression RBLOCK
-                    -> ^(ARRAY primitive_type expression);
+composite_type: ARRAY primitive_type LBLOCK expression RBLOCK;
 
 // Lexer rules
 IDENTIFIER: LETTER (LETTER | DIGIT)*;
