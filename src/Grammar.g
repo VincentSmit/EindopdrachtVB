@@ -78,9 +78,10 @@ import_statement: FROM IDENTIFIER IMPORT IDENTIFIER SEMICOLON
                       -> ^(IMPORT IDENTIFIER IDENTIFIER);
 
 command:
+    (IDENTIFIER ASSIGN) => assign_statement |
     declaration |
-    expression |
-    statement;
+    statement |
+    expression SEMICOLON!;
 
 commands: command command?;
 
@@ -89,10 +90,12 @@ declaration:
     var_declaration |
     scope_declaration;
 
-var_declaration: type IDENTIFIER assignment? SEMICOLON
-                     -> ^(VAR type IDENTIFIER assignment?);
+var_declaration: type IDENTIFIER (a=var_assignment)? SEMICOLON
+                     -> {a == null}? ^(VAR type IDENTIFIER)
+                     -> ^(VAR type IDENTIFIER) ^(ASSIGN IDENTIFIER $a);
 
-assignment: ASSIGN! expression;
+var_assignment: ASSIGN! expression;
+assignment: ASSIGN expression;
 
 scope_declaration: 
     func_declaration; // |
@@ -133,6 +136,9 @@ for_statement: FOR LPAREN IDENTIFIER IN expression RPAREN LCURLY command* RCURLY
                    -> ^(FOR IDENTIFIER expression command*);
 return_statement: RETURN expression SEMICOLON!;
 
+assign_statement: IDENTIFIER ASSIGN expression
+                    -> ^(ASSIGN IDENTIFIER expression);
+
 // Expressions, order of operands:
 // ()
 // ^
@@ -140,16 +146,18 @@ return_statement: RETURN expression SEMICOLON!;
 // +, -
 // <=, >=, <, >, ==, !=, ||, &&
 expression:
+    (IDENTIFIER LPAREN) => call_expression|
     expressionAO |
-    array_literal |
-    call_expression;
+    array_literal ;
 expressionAO: expressionLO (AND expressionLO | OR expressionLO)*;
 expressionLO: expressionPM ((LT^ | GT^ | LTE^ | GTE^ | EQ^ | NEQ^) expressionPM)*;
 expressionPM: expressionMD ((PLUS^ | MINUS^) expressionMD)*;
 expressionMD: expressionPW ((MULTIPL^ | DIVIDES^) expressionPW)*;
 expressionPW: operand (POWER operand)*;
 
-call_expression: CALL IDENTIFIER LPAREN expression* RPAREN;
+expression_list: expression (COMMA! expression)?;
+call_expression: IDENTIFIER LPAREN expression_list? RPAREN
+                     -> ^(CALL IDENTIFIER expression_list?);
 
 operand:
     LPAREN! expression RPAREN! |
@@ -161,7 +169,10 @@ array_literal: LBLOCK array_value_list? RBLOCK -> ^(ARRAY array_value_list?);
 array_value_list: expression (COMMA! array_value_list)?;
 
 // Types
-type: primitive_type | composite_type;
+type:
+    (primitive_type LBLOCK) => composite_type |
+    primitive_type;
+
 primitive_type: INTEGER | BOOLEAN | CHARACTER;
 composite_type: ARRAY primitive_type LBLOCK! expression RBLOCK!;
 

@@ -72,13 +72,13 @@ public class Grammar {
                 TreeNodeStream nodes = new BufferedTreeNodeStream(tree);
                 GrammarInterpreter interpreter = new GrammarInterpreter(nodes);
                 interpreter.program();
-            }
+            }*/
 
             if (options.contains(Option.CODE_GENERATOR)) {
                 TreeNodeStream nodes = new BufferedTreeNodeStream(tree);
-                GrammarGenerator generator = new GrammarGenerator(nodes);
+                GrammarTAM generator = new GrammarTAM(nodes);
                 generator.program();
-            }*/
+            }
 
             /*if (options.contains(Option.AST)) { // print the AST as string
                 System.out.println(tree.toStringTree());
