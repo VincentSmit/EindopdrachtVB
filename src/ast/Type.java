@@ -36,7 +36,7 @@ public class Type {
     }
 
     public boolean equals(Type other){
-        return this.type == other.type && this.innerType.equals(other.innerType);
+        return this.primType == other.primType && this.innerType.equals(other.innerType);
     }
 
     public static Primitive getPrimFromString(String type) throws InvalidTypeException{

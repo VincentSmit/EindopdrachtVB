@@ -24,6 +24,7 @@ ANTLR_PATH = os.path.join(ANTLR_DIR, ANTLR_FILE)
 
 GRAMMAR_DIR = os.path.join(THIS_DIR, "../src")
 GRAMMAR_FILE = os.path.join(GRAMMAR_DIR, "Grammar.g")
+GRAMMAR_CHECKER_FILE = os.path.join(GRAMMAR_DIR, "checker/GrammarChecker.g")
 
 CLASSPATH = ".:%s:%s" % (ANTLR_PATH, os.environ.get("CLASSPATH"))
 
@@ -49,7 +50,7 @@ def check_antlr():
 
 def compile_grammar(stdin=None, stdout=None, stderr=None):
     with set_cwd(GRAMMAR_DIR):
-        subprocess.call(["java", "-jar", ANTLR_PATH, GRAMMAR_FILE])
+        subprocess.call(["java", "-jar", ANTLR_PATH, GRAMMAR_FILE, GRAMMAR_CHECKER_FILE])
         subprocess.call(["javac", "-classpath", CLASSPATH, "Grammar.java"])
 
 class AntlrTest(unittest.TestCase):

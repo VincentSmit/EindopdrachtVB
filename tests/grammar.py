@@ -1,6 +1,6 @@
 from test import AntlrTest
 
-class GrammarTest(AntlrTest):
+class Blaat:
     def test_empty_declaration(self):
         """Test empty declaration (without assignment)"""
         for dtype in ("int", "char", "bool"):
@@ -50,6 +50,11 @@ class GrammarTest(AntlrTest):
         stdout, stderr = self.compile(r"int a; a = a + b;")
         self.assertEqual("(PROGRAM (VAR int a) (= a (+ a b)))", stdout)
 
+class GrammarTest(AntlrTest):
+    def test_blaat(self):
+        stdout, stderr = self.compile("int b;")
+        print(stdout)
+        print(stderr)
 
 
 if __name__ == '__main__':

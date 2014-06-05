@@ -1,9 +1,13 @@
 package ast;
 
 import java.lang.Exception;
+import org.antlr.runtime.RecognitionException;
 
-public class InvalidTypeException extends Exception {
+public class InvalidTypeException extends RecognitionException{
+    private String msg;
+
     public InvalidTypeException(String message){
-        super(message);
+        super();
+        this.msg = message;
     }
 }
