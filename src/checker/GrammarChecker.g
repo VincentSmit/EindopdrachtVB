@@ -3,6 +3,7 @@ tree grammar GrammarChecker;
 options {
     tokenVocab=Grammar;
     ASTLabelType=CommonTree;
+    output=AST;
 }
 
 @rulecatch {
@@ -43,8 +44,9 @@ declaration
 
 var_declaration
     :   ^(VAR t=type id=IDENTIFIER<TypedNode> assignment?){
+
         try {
-            symtab.enter($id.text, new IdEntry());
+            symtab.enter($id.text, new IdEntry((TypedNode)id));
             ((TypedNode)id).setExprType(((TypedNode)$t.tree).getExprType());
         } catch (SymbolTableException e) {
             System.err.print("ERROR: exception thrown by symboltable: ");
@@ -61,8 +63,8 @@ scope_declaration
 func_declaration:
    ^(FUNC id=IDENTIFIER<TypedNode> t=type ^(ARGS arguments) ^(BODY command*)) {
         try {
-            symtab.enter($id.text, new IdEntry());
-            ((TypedNode)id).setExprType(new Type(Type.getPrimFromString($t.text)));
+            symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
+            ((TypedNode)$id.tree).setExprType(new Type(Type.getPrimFromString($t.text)));
         } catch (SymbolTableException e) {
             System.err.print("ERROR: exception thrown by symboltable: ");
             System.err.println(e.getMessage());
@@ -113,10 +115,13 @@ else_part
 @after{ symtab.closeScope(); }:
     command*;
 
-expression
-    :   operand
-    |   ^(ik=AND ex1=expression ex2=expression) {
-        ((TypedNode)ik).setExprType(new Type(Type.Primitive.BOOLEAN));
+bool_op: AND | OR;
+same_op: PLUS | MINUS | LT | GT | LTE | GTE | EQ | NEQ | DIVIDES | MULTIPL | POWER;
+
+expression:
+    operand |
+    ^(op=bool_op ex1=expression ex2=expression) {
+        ((TypedNode)$op.tree).setExprType(new Type(Type.Primitive.BOOLEAN));
 
         TypedNode ex1tree = (TypedNode)$ex1.tree;
         TypedNode ex2tree = (TypedNode)$ex2.tree;
@@ -126,18 +131,36 @@ expression
         }else if(!ex2tree.getExprType().equals(Type.Primitive.BOOLEAN)) {
             throw new InvalidTypeException("ERROR: Expression of type boolean expected. Found: " + ex2tree.getExprType());
         }
+    } |
+    ^(op=same_op ex1=expression ex2=expression){
+        TypedNode ex1tree = (TypedNode)$ex1.tree;
+        TypedNode ex2tree = (TypedNode)$ex2.tree;
+
+        ((TypedNode)$op.tree).setExprType(ex1tree.getExprType());
     };
 
 
-type: primitive_type | composite_type;
+type:
+    primitive_type |
+    composite_type ;
+
 primitive_type:
-    i=INTEGER { ((TypedNode)i).setExprType(new Type(Type.Primitive.INTEGER)); }|
-    b=BOOLEAN { ((TypedNode)b).setExprType(new Type(Type.Primitive.BOOLEAN)); }|
-    c=CHARACTER { ((TypedNode)b).setExprType(new Type(Type.Primitive.CHARACTER)); };
+    i=INTEGER {
+        ((TypedNode)$i.tree).setExprType(new Type(Type.Primitive.INTEGER));
+    }|
+    b=BOOLEAN { ((TypedNode)$b.tree).setExprType(new Type(Type.Primitive.BOOLEAN)); }|
+    c=CHARACTER { ((TypedNode)$c.tree).setExprType(new Type(Type.Primitive.CHARACTER)); };
 composite_type:
-    arr=ARRAY t=primitive_type expression{
+    ^(arr=ARRAY t=primitive_type expression){
         Type ttype = ((TypedNode)$t.tree).getExprType();
-        ((TypedNode)arr).setExprType(new Type(Type.Primitive.ARRAY, ttype));
+        ((TypedNode)$arr.tree).setExprType(new Type(Type.Primitive.ARRAY, ttype));
     };
 
-operand: IDENTIFIER | NUMBER | STRING_VALUE;
+operand:
+    id=IDENTIFIER {
+        Type t = symtab.retrieve($id.text).getNode().getExprType();
+        ((TypedNode)$id.tree).setExprType(t);
+    } |
+    NUMBER |
+    STRING_VALUE;
+

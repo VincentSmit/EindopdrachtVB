@@ -1,6 +1,17 @@
+from __future__ import unicode_literals
 from test import AntlrTest
 
-class Blaat:
+GRAMMAR_OPTS = ("-no_checker", "-ast")
+
+class GrammarTest(AntlrTest):
+    def compile(self, grammar):
+        return super(GrammarTest, self).compile(grammar, options=GRAMMAR_OPTS)
+
+    def test_array_declaration(self):
+        stdout, stderr = self.compile(r"int[3/2] a;")
+        self.assertEqual("(PROGRAM (VAR (ARRAY int (/ 3 2)) a))", stdout)
+        self.assertEqual("", stderr)
+
     def test_empty_declaration(self):
         """Test empty declaration (without assignment)"""
         for dtype in ("int", "char", "bool"):
@@ -36,10 +47,8 @@ class Blaat:
         self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (ARRAY 1 2 3)))", stdout)
         self.assertEqual("", stderr)
 
-    def test_array_declaration(self):
-        stdout, stderr = self.compile(r"array int[3/2] a;")
-        self.assertEqual("(PROGRAM (VAR array int (/ 3 2) a))", stdout)
-        self.assertEqual("", stderr)
+
+
 
     def test_function_call(self):
         stdout, stderr = self.compile(r"fuuuunc(1, 3/4);")
@@ -49,12 +58,6 @@ class Blaat:
     def test_operator(self):
         stdout, stderr = self.compile(r"int a; a = a + b;")
         self.assertEqual("(PROGRAM (VAR int a) (= a (+ a b)))", stdout)
-
-class GrammarTest(AntlrTest):
-    def test_blaat(self):
-        stdout, stderr = self.compile("int b;")
-        print(stdout)
-        print(stderr)
 
 
 if __name__ == '__main__':

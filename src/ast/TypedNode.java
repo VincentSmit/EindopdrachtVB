@@ -20,6 +20,10 @@ public class TypedNode extends CommonTree {
         this.exprType = n.getExprType();
     }
 
+    public TypedNode(CommonTree n){
+        super(n);
+    }
+
     public TypedNode dupNode() {
         return new TypedNode(this);
     }

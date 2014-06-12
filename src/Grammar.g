@@ -53,6 +53,7 @@ tokens {
     IN = 'in';
     RETURNS = 'returns';
     FUNC = 'func';
+    ARRAY = 'array';
     ARGS = 'args';
     VAR = 'var';
     OF = 'of';
@@ -61,7 +62,6 @@ tokens {
     INTEGER = 'int';
     CHARACTER = 'char';
     BOOLEAN = 'bool';
-    ARRAY = 'array';
     CALL = 'call';
 }
 
@@ -140,7 +140,7 @@ assign_statement: IDENTIFIER ASSIGN expression
 // +, -
 // <=, >=, <, >, ==, !=, ||, &&
 expression:
-    //(IDENTIFIER LPAREN) => call_expression|
+    (IDENTIFIER LPAREN) => call_expression|
     expressionAO |
     array_literal ;
 expressionAO: expressionLO (AND<TypedNode>^ expressionLO | OR<TypedNode>^ expressionLO)*;
@@ -150,8 +150,8 @@ expressionMD: expressionPW ((MULTIPL<TypedNode>^ | DIVIDES<TypedNode>^) expressi
 expressionPW: operand (POWER<TypedNode>^ operand)*;
 
 expression_list: expression (COMMA! expression)?;
-//call_expression: IDENTIFIER LPAREN expression_list? RPAREN
-//                     -> ^(CALL IDENTIFIER expression_list?);
+call_expression: IDENTIFIER LPAREN expression_list? RPAREN
+                     -> ^(CALL IDENTIFIER expression_list?);
 
 operand:
     LPAREN! expression RPAREN! |
@@ -172,7 +172,8 @@ primitive_type:
     BOOLEAN<TypedNode> |
     CHARACTER<TypedNode> ;
 
-composite_type: ARRAY<TypedNode> primitive_type LBLOCK! expression RBLOCK!;
+composite_type: primitive_type LBLOCK expression RBLOCK
+                    -> ^(ARRAY primitive_type expression);
 
 // Lexer rules
 IDENTIFIER: LETTER (LETTER | DIGIT)*;

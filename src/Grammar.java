@@ -15,6 +15,7 @@ import org.antlr.stringtemplate.StringTemplate;
 
 import checker.GrammarChecker;
 import ast.InvalidTypeException;
+import ast.TypedNodeAdaptor;
 
 /**
 * Program that creates and starts the Grammar lexer, parser, etc.
@@ -58,15 +59,18 @@ public class Grammar {
             InputStream in = inputFile == null ? System.in : new FileInputStream(inputFile);
             GrammarLexer lexer = new GrammarLexer(new ANTLRInputStream(in));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            GrammarParser parser = new GrammarParser(tokens);
 
+            GrammarParser parser = new GrammarParser(tokens);
+            parser.setTreeAdaptor(new TypedNodeAdaptor());
             GrammarParser.program_return result = parser.program();
+
             CommonTree tree = (CommonTree) result.getTree();
             System.out.println(tree.toStringTree());
 
             if (!options.contains(Option.NO_CHECKER)) { // check the AST
                 CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
                 GrammarChecker checker = new GrammarChecker(nodes);
+                checker.setTreeAdaptor(new TypedNodeAdaptor());
                 checker.program();
             }
 
