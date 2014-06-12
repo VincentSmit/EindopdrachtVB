@@ -136,6 +136,8 @@ expression:
         TypedNode ex1tree = (TypedNode)$ex1.tree;
         TypedNode ex2tree = (TypedNode)$ex2.tree;
 
+        System.out.println(ex1tree.getExprType().equals(ex2tree.getExprType()));
+
         ((TypedNode)$op.tree).setExprType(ex1tree.getExprType());
     };
 
