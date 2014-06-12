@@ -24,6 +24,8 @@ ANTLR_PATH = os.path.join(ANTLR_DIR, ANTLR_FILE)
 
 GRAMMAR_DIR = os.path.join(THIS_DIR, "../src")
 GRAMMAR_FILE = os.path.join(GRAMMAR_DIR, "Grammar.g")
+GRAMMAR_CHECKER_FILE = os.path.join(GRAMMAR_DIR, "checker/GrammarChecker.g")
+GRAMMAR_TAM_FILE = os.path.join(GRAMMAR_DIR, "GrammarTAM.g")
 
 CLASSPATH = ".:%s:%s" % (ANTLR_PATH, os.environ.get("CLASSPATH"))
 
@@ -49,7 +51,7 @@ def check_antlr():
 
 def compile_grammar(stdin=None, stdout=None, stderr=None):
     with set_cwd(GRAMMAR_DIR):
-        subprocess.call(["java", "-jar", ANTLR_PATH, GRAMMAR_FILE])
+        subprocess.call(["java", "-jar", ANTLR_PATH, GRAMMAR_FILE, GRAMMAR_CHECKER_FILE, GRAMMAR_TAM_FILE])
         subprocess.call(["javac", "-classpath", CLASSPATH, "Grammar.java"])
 
 class AntlrTest(unittest.TestCase):
@@ -62,17 +64,14 @@ class AntlrTest(unittest.TestCase):
         compile_grammar()
         print("Testing %s" % cls.__name__)
 
-    def get_ast(self, grammar):
-        return self.compile(grammar, ("-ast",))
-
-    def compile(self, grammar, opts=()):
+    def compile(self, grammar, options=()):
         with set_cwd(GRAMMAR_DIR):
             with NamedTemporaryFile() as fp:
                 fp.write(grammar.encode('utf-8'))
                 fp.flush()
 
-                args = ("java", "-classpath", CLASSPATH, "Grammar")
-                process = subprocess.Popen(args + tuple(opts) + (fp.name,), stdout=PIPE, stderr=PIPE)
+                args = ("java", "-classpath", CLASSPATH, "Grammar") + tuple(options) + (fp.name,)
+                process = subprocess.Popen(args, stdout=PIPE, stderr=PIPE)
                 stdout, stderr = process.communicate()
 
                 return stdout.decode("utf-8").strip(), stderr.decode("utf-8").strip()

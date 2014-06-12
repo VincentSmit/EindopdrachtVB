@@ -13,6 +13,10 @@ import org.antlr.runtime.tree.DOTTreeGenerator;
 import org.antlr.runtime.tree.TreeNodeStream;
 import org.antlr.stringtemplate.StringTemplate;
 
+import checker.GrammarChecker;
+import ast.InvalidTypeException;
+import ast.TypedNodeAdaptor;
+
 /**
 * Program that creates and starts the Grammar lexer, parser, etc.
 * @author Theo Ruys
@@ -55,18 +59,21 @@ public class Grammar {
             InputStream in = inputFile == null ? System.in : new FileInputStream(inputFile);
             GrammarLexer lexer = new GrammarLexer(new ANTLRInputStream(in));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
-            GrammarParser parser = new GrammarParser(tokens);
 
+            GrammarParser parser = new GrammarParser(tokens);
+            parser.setTreeAdaptor(new TypedNodeAdaptor());
             GrammarParser.program_return result = parser.program();
+
             CommonTree tree = (CommonTree) result.getTree();
 
-            /*if (!options.contains(Option.NO_CHECKER)) { // check the AST
+            if (!options.contains(Option.NO_CHECKER)) { // check the AST
                 CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
                 GrammarChecker checker = new GrammarChecker(nodes);
+                checker.setTreeAdaptor(new TypedNodeAdaptor());
                 checker.program();
             }
 
-            if (!options.contains(Option.NO_INTERPRETER) &&
+            /*if (!options.contains(Option.NO_INTERPRETER) &&
                     !options.contains(Option.CODE_GENERATOR)) { // interpret the AST
                 TreeNodeStream nodes = new BufferedTreeNodeStream(tree);
                 GrammarInterpreter interpreter = new GrammarInterpreter(nodes);

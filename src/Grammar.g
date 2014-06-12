@@ -53,6 +53,7 @@ tokens {
     IN = 'in';
     RETURNS = 'returns';
     FUNC = 'func';
+    ARRAY = 'array';
     ARGS = 'args';
     VAR = 'var';
     OF = 'of';
@@ -61,7 +62,6 @@ tokens {
     INTEGER = 'int';
     CHARACTER = 'char';
     BOOLEAN = 'bool';
-    ARRAY = 'array';
     CALL = 'call';
 }
 
@@ -69,13 +69,11 @@ tokens {
 }
 
 @header {
+    import ast.TypedNode;
 }
 
 // Parser rules
-program: import_statement* command+ -> ^(PROGRAM import_statement* command+);
-
-import_statement: FROM IDENTIFIER IMPORT IDENTIFIER SEMICOLON
-                      -> ^(IMPORT IDENTIFIER IDENTIFIER);
+program: command+ -> ^(PROGRAM command+);
 
 command:
     (IDENTIFIER ASSIGN) => assign_statement |
@@ -91,8 +89,8 @@ declaration:
     scope_declaration;
 
 var_declaration: type IDENTIFIER (a=var_assignment)? SEMICOLON
-                     -> {a == null}? ^(VAR type IDENTIFIER)
-                     -> ^(VAR type IDENTIFIER) ^(ASSIGN IDENTIFIER $a);
+                     -> {a == null}? ^(VAR type IDENTIFIER<TypedNode>)
+                     -> ^(VAR type IDENTIFIER<TypedNode>) ^(ASSIGN IDENTIFIER<TypedNode> $a);
 
 var_assignment: ASSIGN! expression;
 assignment: ASSIGN expression;
@@ -104,10 +102,6 @@ scope_declaration:
 func_declaration: FUNC IDENTIFIER LPAREN arguments RPAREN RETURNS type LCURLY commands? RCURLY
                       -> ^(FUNC IDENTIFIER type ^(ARGS arguments) ^(BODY commands?));
 
-
-//class_scope: LCURLY declaration* RCURLY;
-//class_declaration: CLASS IDENTIFIER EXTENDS IDENTIFIER class_scope
-//                       -> ^(CLASS IDENTIFIER IDENTIFIER (^BODY class_scope));
 
 // Parses arguments of function declaration
 argument: type IDENTIFIER;
@@ -133,11 +127,11 @@ if_statement: if_part else_part? -> ^(IF if_part ELSE else_part?);
 while_statement: WHILE LPAREN expression RPAREN LCURLY (command SEMICOLON)* RCURLY
                      -> ^(WHILE expression command*);
 for_statement: FOR LPAREN IDENTIFIER IN expression RPAREN LCURLY command* RCURLY
-                   -> ^(FOR IDENTIFIER expression command*);
+                   -> ^(FOR IDENTIFIER<TypedNode> expression command*);
 return_statement: RETURN expression SEMICOLON!;
 
 assign_statement: IDENTIFIER ASSIGN expression
-                    -> ^(ASSIGN IDENTIFIER expression);
+                    -> ^(ASSIGN IDENTIFIER<TypedNode> expression);
 
 // Expressions, order of operands:
 // ()
@@ -149,11 +143,11 @@ expression:
     (IDENTIFIER LPAREN) => call_expression|
     expressionAO |
     array_literal ;
-expressionAO: expressionLO (AND expressionLO | OR expressionLO)*;
-expressionLO: expressionPM ((LT^ | GT^ | LTE^ | GTE^ | EQ^ | NEQ^) expressionPM)*;
-expressionPM: expressionMD ((PLUS^ | MINUS^) expressionMD)*;
-expressionMD: expressionPW ((MULTIPL^ | DIVIDES^) expressionPW)*;
-expressionPW: operand (POWER operand)*;
+expressionAO: expressionLO (AND<TypedNode>^ expressionLO | OR<TypedNode>^ expressionLO)*;
+expressionLO: expressionPM ((LT<TypedNode>^ | GT<TypedNode>^ | LTE<TypedNode>^ | GTE<TypedNode>^ | EQ<TypedNode>^ | NEQ<TypedNode>^) expressionPM)*;
+expressionPM: expressionMD ((PLUS<TypedNode>^ | MINUS<TypedNode>^) expressionMD)*;
+expressionMD: expressionPW ((MULTIPL<TypedNode>^ | DIVIDES<TypedNode>^) expressionPW)*;
+expressionPW: operand (POWER<TypedNode>^ operand)*;
 
 expression_list: expression (COMMA! expression)?;
 call_expression: IDENTIFIER LPAREN expression_list? RPAREN
@@ -161,9 +155,9 @@ call_expression: IDENTIFIER LPAREN expression_list? RPAREN
 
 operand:
     LPAREN! expression RPAREN! |
-    IDENTIFIER |
-    NUMBER |
-    STRING_VALUE;
+    IDENTIFIER<TypedNode> |
+    NUMBER<TypedNode> |
+    STRING_VALUE<TypedNode>;
 
 array_literal: LBLOCK array_value_list? RBLOCK -> ^(ARRAY array_value_list?);
 array_value_list: expression (COMMA! array_value_list)?;
@@ -173,7 +167,11 @@ type:
     (primitive_type LBLOCK) => composite_type |
     primitive_type;
 
-primitive_type: INTEGER | BOOLEAN | CHARACTER;
+primitive_type:
+    INTEGER<TypedNode> |
+    BOOLEAN<TypedNode> |
+    CHARACTER<TypedNode> ;
+
 composite_type: primitive_type LBLOCK expression RBLOCK
                     -> ^(ARRAY primitive_type expression);
 
