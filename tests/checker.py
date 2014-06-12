@@ -5,6 +5,10 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar)
 
+    def test_int_inference(self):
+        stdout, stderr = self.compile("auto a = 3; int b = 3; a+b;")
+        print(stdout, stderr)
+
     def test_binary_expression(self):
         stdout, stderr = self.compile("int a; char b; a+b;")
         print(stderr)

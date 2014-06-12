@@ -10,4 +10,8 @@ public class InvalidTypeException extends RecognitionException{
         super();
         this.msg = message;
     }
+
+    public String getMessage(){
+        return this.msg;
+    }
 }

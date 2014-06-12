@@ -9,7 +9,7 @@ class GrammarTest(AntlrTest):
 
     def test_empty_declaration(self):
         """Test empty declaration (without assignment)"""
-        for dtype in ("int", "char", "bool"):
+        for dtype in ("int", "char", "bool", "auto"):
             stdout, stderr = self.compile("%s a;" % dtype)
             print(stderr)
             self.assertEqual("(PROGRAM (VAR %s a))" % dtype, stdout)

@@ -6,6 +6,7 @@ public class Type {
         CHARACTER,
         BOOLEAN,
         ARRAY,
+        AUTO,
         FUNCTION
     }
 
@@ -35,10 +36,19 @@ public class Type {
         return innerType;
     }
 
+    /*
+     * @param other
+     */
     public boolean equals(Type other){
-        return this.primType == other.primType &&
-                // In case of null, check on identity
-                (this.innerType == other.innerType || this.innerType.equals(other.innerType));
+        boolean primEqual = this.primType != Primitive.AUTO &&
+                            other.primType != Primitive.AUTO &&
+                            this.primType == other.primType;
+
+        if(this.innerType == null){
+            return primEqual && other.innerType == null;
+        }
+
+        return primEqual && this.innerType.equals(other.innerType);
     }
 
     public static Primitive getPrimFromString(String type) throws InvalidTypeException{
@@ -47,7 +57,12 @@ public class Type {
             case "bool": return Primitive.BOOLEAN;
             case "char": return Primitive.CHARACTER;
             case "array": return Primitive.ARRAY;
+            case "auto": return Primitive.AUTO;
             default: throw new InvalidTypeException(type + " is not a specified type.");
         }
+    }
+
+    public String toString(){
+        return String.format("Type: <%s, %s>", this.primType, this.innerType);
     }
 }

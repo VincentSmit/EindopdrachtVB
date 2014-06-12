@@ -35,4 +35,12 @@ public class TypedNode extends CommonTree {
     public void setExprType(Type type) {
         this.exprType = type;
     }
+
+    public void setExprType(Type.Primitive prim){
+        this.setExprType(new Type(prim));
+    }
+
+    public void setExprType(TypedNode node){
+        this.setExprType(node.getExprType());
+    }
 }

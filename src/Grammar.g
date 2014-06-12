@@ -55,6 +55,7 @@ tokens {
     FUNC = 'func';
     ARRAY = 'array';
     ARGS = 'args';
+    CALL = 'call';
     VAR = 'var';
     OF = 'of';
 
@@ -62,7 +63,7 @@ tokens {
     INTEGER = 'int';
     CHARACTER = 'char';
     BOOLEAN = 'bool';
-    CALL = 'call';
+    AUTO = 'auto';
 }
 
 @lexer::header {
@@ -170,7 +171,8 @@ type:
 primitive_type:
     INTEGER<TypedNode> |
     BOOLEAN<TypedNode> |
-    CHARACTER<TypedNode> ;
+    CHARACTER<TypedNode> |
+    AUTO<TypedNode>;
 
 composite_type: primitive_type LBLOCK expression RBLOCK
                     -> ^(ARRAY primitive_type expression);

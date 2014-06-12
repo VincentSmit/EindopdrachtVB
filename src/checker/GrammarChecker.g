@@ -28,6 +28,17 @@ options {
 @members {
     private SymbolTable<IdEntry> symtab = new SymbolTable<>();
 
+    private boolean equalType(CommonTree a, CommonTree b){
+        TypedNode ta = (TypedNode)a;
+        TypedNode tb = (TypedNode)b;
+        return (ta.getExprType() != null &&
+                tb.getExprType() != null &&
+                ta.getExprType().equals(tb.getExprType()));
+    }
+
+    private TypedNode getID(String id){
+        return symtab.retrieve(id).getNode();
+    }
 }
 
 program
@@ -46,8 +57,8 @@ var_declaration
     :   ^(VAR t=type id=IDENTIFIER<TypedNode> assignment?){
 
         try {
-            symtab.enter($id.text, new IdEntry((TypedNode)id));
-            ((TypedNode)id).setExprType(((TypedNode)$t.tree).getExprType());
+            symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
+            ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
         } catch (SymbolTableException e) {
             System.err.print("ERROR: exception thrown by symboltable: ");
             System.err.println(e.getMessage());
@@ -96,8 +107,21 @@ statement:
     assignment;
 
 assignment: ^(ASSIGN id=IDENTIFIER<TypedNode> ex=expression){
-    if(!((TypedNode)id).getExprType().equals(((TypedNode)$ex.tree).getExprType())) {
-        throw new InvalidTypeException("ERROR: Type mismatch: identifier of type " + ((TypedNode)id).getExprType() + ", expression of type " + ((TypedNode)$ex.tree).getExprType() + ".");
+    // Retrieve identifier from symtab.
+    id_tree = getID($id.text);
+
+    // If `id` is AUTO, infer type from expression
+    if(((TypedNode)$id.tree).getExprType().getPrimType().equals(Type.Primitive.AUTO)){
+        ((TypedNode)$id.tree).setExprType((TypedNode)$ex.tree);
+    }
+
+    if(!equalType($id.tree, $ex.tree)){
+        throw new InvalidTypeException(String.format(
+            "ERROR: Type mismatch: \%s vs \%s.",
+            ((TypedNode)$id.tree).getExprType(),
+            ((TypedNode)$ex.tree).getExprType()
+        ));
+
     }
 };
 
@@ -136,6 +160,7 @@ expression:
         TypedNode ex1tree = (TypedNode)$ex1.tree;
         TypedNode ex2tree = (TypedNode)$ex2.tree;
 
+        System.out.println(ex1tree.getExprType());
         System.out.println(ex1tree.getExprType().equals(ex2tree.getExprType()));
 
         ((TypedNode)$op.tree).setExprType(ex1tree.getExprType());
@@ -147,11 +172,11 @@ type:
     composite_type ;
 
 primitive_type:
-    i=INTEGER {
-        ((TypedNode)$i.tree).setExprType(new Type(Type.Primitive.INTEGER));
-    }|
-    b=BOOLEAN { ((TypedNode)$b.tree).setExprType(new Type(Type.Primitive.BOOLEAN)); }|
-    c=CHARACTER { ((TypedNode)$c.tree).setExprType(new Type(Type.Primitive.CHARACTER)); };
+    i=INTEGER    { ((TypedNode)$i.tree).setExprType(Type.Primitive.INTEGER); }|
+    b=BOOLEAN    { ((TypedNode)$b.tree).setExprType(Type.Primitive.BOOLEAN); }|
+    c=CHARACTER  { ((TypedNode)$c.tree).setExprType(Type.Primitive.CHARACTER); }|
+    a=AUTO       { ((TypedNode)$a.tree).setExprType(Type.Primitive.AUTO); };
+
 composite_type:
     ^(arr=ARRAY t=primitive_type expression){
         Type ttype = ((TypedNode)$t.tree).getExprType();
@@ -163,6 +188,10 @@ operand:
         Type t = symtab.retrieve($id.text).getNode().getExprType();
         ((TypedNode)$id.tree).setExprType(t);
     } |
-    NUMBER |
-    STRING_VALUE;
+    n=NUMBER {
+        ((TypedNode)$n.tree).setExprType(Type.Primitive.INTEGER);
+    } |
+    s=STRING_VALUE {
+        ((TypedNode)$s.tree).setExprType(Type.Primitive.CHARACTER);
+    };
 
