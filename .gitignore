@@ -17,3 +17,8 @@ tests/antlr
 *.pyc
 *.swp
 *.tokens
+
+GrammarLexer.java
+GrammarParser.java
+src/checker/GrammarChecker.java
+src/TAM/GrammarTAM.java

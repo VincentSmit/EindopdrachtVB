@@ -6,10 +6,11 @@ options {
 }
 
 @header {
-import java.util.Map;
-import java.util.HashMap;
-import java.util.Stack;
-import java.util.List;
+    package TAM;
+    import java.util.Map;
+    import java.util.HashMap;
+    import java.util.Stack;
+    import java.util.List;
 }
 
 @members {
