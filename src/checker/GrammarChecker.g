@@ -42,9 +42,8 @@ options {
     }
 
     public Reporter reporter;
-    public void setReporter(Reporter r){
-        this.reporter = r;
-    }
+    public void setReporter(Reporter r){ this.reporter = r; }
+    public void log(String msg){ this.reporter.log(msg); }
 }
 
 program
@@ -120,6 +119,7 @@ assignment: ^(ASSIGN id=IDENTIFIER<TypedNode> ex=expression){
     // If `id` is AUTO, infer type from expression
     if(((TypedNode)$id.tree).getExprType().getPrimType().equals(Type.Primitive.AUTO)){
         ((TypedNode)$id.tree).setExprType((TypedNode)$ex.tree);
+        log(String.format("Setting '\%s' to \%s", $id.text, ((TypedNode)$id.tree).getExprType()));
     }
 
     if(!equalType($id.tree, $ex.tree)){
@@ -167,9 +167,6 @@ expression:
         TypedNode ex1tree = (TypedNode)$ex1.tree;
         TypedNode ex2tree = (TypedNode)$ex2.tree;
 
-        System.out.println(ex1tree.getExprType());
-        System.out.println(ex1tree.getExprType().equals(ex2tree.getExprType()));
-
         ((TypedNode)$op.tree).setExprType(ex1tree.getExprType());
     };
 
@@ -200,5 +197,8 @@ operand:
     } |
     s=STRING_VALUE {
         ((TypedNode)$s.tree).setExprType(Type.Primitive.CHARACTER);
+    } |
+    b=(TRUE|FALSE){
+        ((TypedNode)$b.tree).setExprType(Type.Primitive.BOOLEAN);
     };
 

@@ -47,6 +47,8 @@ tokens {
     FROM = 'from';
     IMPORT = 'import';
     BREAK = 'break';
+    TRUE = 'true';
+    FALSE = 'false';
     CONTINUE = 'continue';
     RETURN = 'return';
     FOR = 'for';
@@ -160,7 +162,10 @@ operand:
     LPAREN! expression RPAREN! |
     IDENTIFIER<TypedNode> |
     NUMBER<TypedNode> |
-    STRING_VALUE<TypedNode>;
+    STRING_VALUE<TypedNode>|
+    bool;
+
+bool: TRUE<TypedNode> | FALSE<TypedNode>;
 
 array_literal: LBLOCK array_value_list? RBLOCK -> ^(ARRAY array_value_list?);
 array_value_list: expression (COMMA! array_value_list)?;

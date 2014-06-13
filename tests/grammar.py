@@ -92,6 +92,19 @@ class GrammarTest(AntlrTest):
         self.assertEqual("(PROGRAM (IF (< a b) (IF (< a b) (= a b) ELSE) ELSE))", stdout)
         self.assertEqual("", stderr)
 
+    def test_boolean(self):
+        stdout, stderr = self.compile(r"int a = true;")
+        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a true))", stdout)
+        self.assertEqual("", stderr)
+
+        stdout, stderr = self.compile(r"int a = false;")
+        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a false))", stdout)
+        self.assertEqual("", stderr)
+
+    def test_operator_precedence(self):
+        stdout, stderr = self.compile("auto a = 3 + 4 / 5 ^ 2 <= 6 ^ (3+4) / 5;")
+        self.assertEqual(stdout, "(PROGRAM (VAR auto a) (ASSIGN a (<= (+ 3 (/ 4 (^ 5 2))) (/ (^ 6 (+ 3 4)) 5))))")
+
     # INVALID PROGRAMS
 
 

@@ -63,6 +63,6 @@ public class Type {
     }
 
     public String toString(){
-        return String.format("Type: <%s, %s>", this.primType, this.innerType);
+        return String.format("Type<%s, %s>", this.primType, this.innerType);
     }
 }
