@@ -11,7 +11,6 @@ class GrammarTest(AntlrTest):
         """Test empty declaration (without assignment)"""
         for dtype in ("int", "char", "bool", "auto"):
             stdout, stderr = self.compile("%s a;" % dtype)
-            print(stderr)
             self.assertEqual("(PROGRAM (VAR %s a))" % dtype, stdout)
             self.assertEqual("", stderr)
 
@@ -35,6 +34,16 @@ class GrammarTest(AntlrTest):
     def test_function_declaration(self):
         stdout, stderr = self.compile(r"func foo(int a, char b) returns bool{}")
         self.assertEqual("(PROGRAM (func foo bool (ARGS int a char b) BODY))", stdout)
+        self.assertEqual("", stderr)
+
+    def test_empty_function_declaration(self):
+        stdout, stderr = self.compile(r"func foo() returns bool{}")
+        self.assertEqual("(PROGRAM (func foo bool ARGS BODY))", stdout)
+        self.assertEqual("", stderr)
+
+    def test_auto_type_function_declaration(self):
+        stdout, stderr = self.compile(r"func foo(){}")
+        self.assertEqual("(PROGRAM (func foo auto ARGS BODY))", stdout)
         self.assertEqual("", stderr)
 
     def test_array_literal(self):
@@ -61,6 +70,26 @@ class GrammarTest(AntlrTest):
     def test_while(self):
         stdout, stderr = self.compile(r"while(a<b){ a = b + 1; }")
         self.assertEqual("(PROGRAM (while (< a b) (= a (+ b 1))))", stdout)
+        self.assertEqual("", stderr)
+
+    def test_empty_while(self):
+        stdout, stderr = self.compile(r"while(a<b){}")
+        self.assertEqual("(PROGRAM (while (< a b)))", stdout)
+        self.assertEqual("", stderr)
+
+    def test_if(self):
+        stdout, stderr = self.compile(r"if(a<b){ a = b + 1; }")
+        self.assertEqual("(PROGRAM (IF (< a b) (= a (+ b 1)) ELSE))", stdout)
+        self.assertEqual("", stderr)
+
+    def test_if_else(self):
+        stdout, stderr = self.compile(r"if(a<b){ a = b; } else { b = a; }")
+        self.assertEqual("(PROGRAM (IF (< a b) (= a b) ELSE (= b a)))", stdout)
+        self.assertEqual("", stderr)
+
+    def test_nested(self):
+        stdout, stderr = self.compile(r"if(a<b){ if(a<b){ a = b; }}")
+        self.assertEqual("(PROGRAM (IF (< a b) (IF (< a b) (= a b) ELSE) ELSE))", stdout)
         self.assertEqual("", stderr)
 
     # INVALID PROGRAMS

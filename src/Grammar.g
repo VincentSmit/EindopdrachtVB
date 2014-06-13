@@ -71,13 +71,14 @@ tokens {
 
 @header {
     import ast.TypedNode;
+    import ast.ControlNode;
 }
 
 // Parser rules
 program: command+ -> ^(PROGRAM command+);
 
 command:
-    (IDENTIFIER ASSIGN) => assign_statement |
+    (IDENTIFIER ASSIGN) => assign_statement SEMICOLON! |
     declaration |
     statement |
     expression SEMICOLON!;
@@ -100,8 +101,9 @@ scope_declaration:
     func_declaration; // |
 //    class_declaration;
 
-func_declaration: FUNC IDENTIFIER LPAREN arguments RPAREN RETURNS type LCURLY commands? RCURLY
-                      -> ^(FUNC IDENTIFIER type ^(ARGS arguments) ^(BODY commands?));
+func_declaration: FUNC IDENTIFIER LPAREN arguments? RPAREN (RETURNS t=type)? LCURLY commands? RCURLY
+                      -> {t == null}? ^(FUNC IDENTIFIER IDENTIFIER<TypedNode>["auto"] ^(ARGS arguments?) ^(BODY commands?))
+                      -> ^(FUNC IDENTIFIER type ^(ARGS arguments?) ^(BODY commands?));
 
 
 // Parses arguments of function declaration
@@ -114,22 +116,22 @@ statement:
     while_statement |
     return_statement |
     for_statement |
-    BREAK SEMICOLON! |
-    CONTINUE SEMICOLON!;
+    BREAK<ControlNode> SEMICOLON! |
+    CONTINUE<ControlNode> SEMICOLON!;
 
-if_part: IF LPAREN expression RPAREN LCURLY (command SEMICOLON)* RCURLY
+if_part: IF LPAREN expression RPAREN LCURLY command* RCURLY
              -> expression command*;
 
-else_part: ELSE LCURLY (command SEMICOLON)* RCURLY
+else_part: ELSE LCURLY (command)* RCURLY
              -> command*;
 
 if_statement: if_part else_part? -> ^(IF if_part ELSE else_part?);
 
-while_statement: WHILE LPAREN expression RPAREN LCURLY (command SEMICOLON)* RCURLY
+while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
                      -> ^(WHILE expression command*);
 for_statement: FOR LPAREN IDENTIFIER IN expression RPAREN LCURLY command* RCURLY
                    -> ^(FOR IDENTIFIER<TypedNode> expression command*);
-return_statement: RETURN expression SEMICOLON!;
+return_statement: RETURN<ControlNode> expression SEMICOLON!;
 
 assign_statement: IDENTIFIER ASSIGN expression
                     -> ^(ASSIGN IDENTIFIER<TypedNode> expression);

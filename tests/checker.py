@@ -3,7 +3,13 @@ from test import AntlrTest
 
 class CheckerTest(AntlrTest):
     def compile(self, grammar):
-        return super(CheckerTest, self).compile(grammar)
+        return super(CheckerTest, self).compile(grammar, options=("-ast",))
+
+    def test_function_declaration(self):
+        stdout, stderr = self.compile("func a(int x) returns int{ x = x + 1; }")
+        print(stdout)
+        print(stderr)
+        pass
 
     def test_int_inference(self):
         stdout, stderr = self.compile("auto a = 3; int b = 3; a+b;")

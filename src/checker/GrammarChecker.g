@@ -46,6 +46,7 @@ program
     : ^(PROGRAM command+) { symtab.closeScope(); }
     ;
 
+commands: command+;
 command: declaration | expression | statement;
 
 declaration
@@ -72,24 +73,27 @@ scope_declaration
     func_declaration;
 
 func_declaration:
-   ^(FUNC id=IDENTIFIER<TypedNode> t=type ^(ARGS arguments) ^(BODY command*)) {
+   ^(FUNC id=IDENTIFIER<TypedNode> t=type ^(ARGS arguments?) ^(BODY commands?)) {
         try {
             symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
-            ((TypedNode)$id.tree).setExprType(new Type(Type.getPrimFromString($t.text)));
+            ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
         } catch (SymbolTableException e) {
             System.err.print("ERROR: exception thrown by symboltable: ");
             System.err.println(e.getMessage());
-        } catch (InvalidTypeException e){
-            System.err.print("ERROR: exception thrown by typesetter: ");
-            System.err.println(e.getMessage());
-        }
+        } 
     };
 
-argument:
-    (t=type id=IDENTIFIER) {};
-
-arguments:
-    argument (arguments)?;
+argument: t=type id=IDENTIFIER{
+    // Code duplication! :(
+    try {
+        symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
+        ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
+    } catch (SymbolTableException e) {
+        System.err.print("ERROR: exception thrown by symboltable: ");
+        System.err.println(e.getMessage());
+    } 
+};
+arguments: argument (arguments)?;
 
 statement:
     ^(IF if_part ELSE else_part) |

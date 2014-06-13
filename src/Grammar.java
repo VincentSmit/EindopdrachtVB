@@ -66,6 +66,10 @@ public class Grammar {
 
             CommonTree tree = (CommonTree) result.getTree();
 
+            if (options.contains(Option.AST)) { // print the AST as string
+                System.out.println(tree.toStringTree());
+            }
+
             if (!options.contains(Option.NO_CHECKER)) { // check the AST
                 CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
                 GrammarChecker checker = new GrammarChecker(nodes);
@@ -86,9 +90,6 @@ public class Grammar {
                 generator.program();
             }
 
-            if (options.contains(Option.AST)) { // print the AST as string
-                System.out.println(tree.toStringTree());
-            }
 
             /*if (options.contains(Option.DOT)) { // print the AST as DOT specification
                 DOTTreeGenerator gen = new DOTTreeGenerator();
