@@ -21,6 +21,7 @@ options {
     import ast.TypedNode;
     import ast.TypedNodeAdaptor;
     import ast.InvalidTypeException;
+    import reporter.Reporter;
 }
 
 // Alter code generation so catch-clauses get replaced with this action. 
@@ -39,6 +40,11 @@ options {
     private TypedNode getID(String id){
         return symtab.retrieve(id).getNode();
     }
+
+    public Reporter reporter;
+    public void setReporter(Reporter r){
+        this.reporter = r;
+    }
 }
 
 program
@@ -49,10 +55,7 @@ program
 commands: command+;
 command: declaration | expression | statement;
 
-declaration
-    :   var_declaration
-    |   scope_declaration
-    ; 
+declaration: var_declaration | scope_declaration;
 
 var_declaration
     :   ^(VAR t=type id=IDENTIFIER<TypedNode> assignment?){

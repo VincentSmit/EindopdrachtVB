@@ -13,6 +13,7 @@ import org.antlr.runtime.tree.DOTTreeGenerator;
 import org.antlr.runtime.tree.TreeNodeStream;
 import org.antlr.stringtemplate.StringTemplate;
 
+import reporter.Reporter;
 import checker.GrammarChecker;
 import ast.InvalidTypeException;
 import ast.TypedNodeAdaptor;
@@ -56,12 +57,14 @@ public class Grammar {
         parseOptions(args);
 
         try {
+            Reporter reporter = new Reporter(options.contains(Option.REPORT));
             InputStream in = inputFile == null ? System.in : new FileInputStream(inputFile);
             GrammarLexer lexer = new GrammarLexer(new ANTLRInputStream(in));
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             GrammarParser parser = new GrammarParser(tokens);
             parser.setTreeAdaptor(new TypedNodeAdaptor());
+
             GrammarParser.program_return result = parser.program();
 
             CommonTree tree = (CommonTree) result.getTree();
@@ -74,6 +77,7 @@ public class Grammar {
                 CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
                 GrammarChecker checker = new GrammarChecker(nodes);
                 checker.setTreeAdaptor(new TypedNodeAdaptor());
+                checker.setReporter(reporter);
                 checker.program();
             }
 
@@ -142,6 +146,7 @@ public class Grammar {
         AST,
         NO_CHECKER,
         NO_INTERPRETER,
+        REPORT,
         CODE_GENERATOR;
 
         private Option() {
