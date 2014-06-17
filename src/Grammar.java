@@ -1,7 +1,10 @@
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.Scanner;
 
 import org.antlr.runtime.ANTLRInputStream;
 import org.antlr.runtime.CommonTokenStream;
@@ -57,9 +60,13 @@ public class Grammar {
         parseOptions(args);
 
         try {
-            Reporter reporter = new Reporter(options.contains(Option.REPORT));
             InputStream in = inputFile == null ? System.in : new FileInputStream(inputFile);
-            GrammarLexer lexer = new GrammarLexer(new ANTLRInputStream(in));
+            String source = (new Scanner(in).useDelimiter("\\A")).next();
+            Reporter reporter = new Reporter(options.contains(Option.REPORT), source);
+
+            GrammarLexer lexer = new GrammarLexer(new ANTLRInputStream(
+                new ByteArrayInputStream(source.getBytes(StandardCharsets.UTF_8)))
+            );
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             GrammarParser parser = new GrammarParser(tokens);
@@ -81,33 +88,13 @@ public class Grammar {
                 checker.program();
             }
 
-            /*if (!options.contains(Option.NO_INTERPRETER) &&
-                    !options.contains(Option.CODE_GENERATOR)) { // interpret the AST
-                TreeNodeStream nodes = new BufferedTreeNodeStream(tree);
-                GrammarInterpreter interpreter = new GrammarInterpreter(nodes);
-                interpreter.program();
-            }*/
-
-            if (options.contains(Option.CODE_GENERATOR)) {
-                TreeNodeStream nodes = new BufferedTreeNodeStream(tree);
-                GrammarTAM generator = new GrammarTAM(nodes);
-                generator.program();
-            }
-
-
-            /*if (options.contains(Option.DOT)) { // print the AST as DOT specification
-                DOTTreeGenerator gen = new DOTTreeGenerator();
-                StringTemplate st = gen.toDOT(tree);
-                System.out.println(st);
-            }*/
-
         } /*catch (GrammarException e) {
             System.err.print("ERROR: GrammarException thrown by compiler: ");
             System.err.println(e.getMessage());
         }*/ catch (RecognitionException e) {
-            System.err.print("ERROR: recognition exception thrown by compiler: ");
+            System.err.print("ERROR: recognition exception thrown by compiler ");
             System.err.println(e.getMessage());
-            e.printStackTrace();
+            //e.printStackTrace();
         } catch (Exception e) {
             System.err.print("ERROR: uncaught exception thrown by compiler: ");
             System.err.println(e.getMessage());

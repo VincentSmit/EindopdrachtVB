@@ -18,18 +18,36 @@ class CheckerTest(AntlrTest):
 
     def test_if(self):
         stdout, stderr = self.compile("int a = 3; if(a){}")
-        self.assertTrue("ERROR: expression must be of type boolean." in stderr)
+        self.assertTrue("Expression must of be of type boolean. Found: Type<INTEGER>." in stderr)
+
+    def test_for(self):
+        stdout, stderr = self.compile("int a;\nfor a in a{}")
+        self.assertTrue("Expression must be iterable. Found: Type<INTEGER>." in stderr)
+
+        stdout, stderr = self.compile("int a; char[1] b;\nfor a in b{}")
+        self.assertTrue("""
+Variable must be of same type as elements of iterable:
+   a: Type<INTEGER>
+   elements of iterable: Type<CHARACTER>""" in stderr)
 
     def test_bool_op(self):
-        stdout, stderr = self.compile("bool a = 3;")
-        self.assertTrue("ERROR: Type mismatch: Type<BOOLEAN> vs Type<INTEGER>.")
+        stdout, stderr = self.compile("int a = 3; a && (1 < 2);")
+        self.assertTrue("Expression of type boolean expected. Found: Type<INTEGER>" in stderr)
 
-        stdout, stderr = self.compile("bool a = true;")
+        stdout, stderr = self.compile("(2 > 3) && (1 < 2);")
         self.assertFalse(stderr)
-
 
     def test_binary_expression(self):
         stdout, stderr = self.compile("int a; char b; a+b;")
+
+    def test_error_reporter(self):
+        stdout, stderr = self.compile("int a;\nchar b;\na+b;")
+        # ... on line 3, char 2:
+        #    a+b;
+        #     ^
+        self.assertIn("   a+b;\n    ^\n", stderr)
+        self.assertIn("on line 3, char 2", stderr)
+
 
 if __name__ == '__main__':
     import unittest

@@ -51,6 +51,10 @@ public class Type {
         return primEqual && this.innerType.equals(other.innerType);
     }
 
+    public boolean equals(Primitive other){
+        return equals(new Type(other));
+    }
+
     public static Primitive getPrimFromString(String type) throws InvalidTypeException{
         switch(type){
             case "int": return Primitive.INTEGER;

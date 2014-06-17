@@ -44,6 +44,15 @@ options {
     public Reporter reporter;
     public void setReporter(Reporter r){ this.reporter = r; }
     public void log(String msg){ this.reporter.log(msg); }
+
+    public void checkSameOp(CommonTree op, TypedNode ex1tree, TypedNode ex2tree) throws InvalidTypeException{
+        if(!(ex1tree.getExprType().equals(ex2tree.getExprType()))){
+            reporter.error(op, "Operator expected operands to be of same type. Found: " +
+            ex1tree.getExprType() + " and " + ex2tree.getExprType() + ".");
+        }
+
+        ((TypedNode)op).setExprType(ex1tree.getExprType());
+    }
 }
 
 program
@@ -100,13 +109,28 @@ arguments: argument (arguments)?;
 statement:
     ^(IF if_part ELSE else_part) |
     ^(WHILE ex=expression command*) {
-        if(!((TypedNode)$ex.tree).getExprType().equals(Type.Primitive.BOOLEAN)) {
-            throw new InvalidTypeException("ERROR: expression must be of type boolean.");
+        TypedNode ext = (TypedNode)$ex.tree;
+        if(!ext.getExprType().equals(Type.Primitive.BOOLEAN)) {
+            reporter.error($ex.tree, "Expression must be of type boolean. Found: " + ext.getExprType() + ".");
         }
     } |
-    ^(FOR IDENTIFIER ex=expression command*) {
-        if(!((TypedNode)$ex.tree).getExprType().equals(Type.Primitive.BOOLEAN)) {
-            throw new InvalidTypeException("ERROR: expression must be of type boolean.");
+    ^(FOR id=IDENTIFIER ex=expression command*) {
+        // Retrieve identifier from symtab.
+        CommonTree old_id_tree = id_tree;
+        id_tree = getID($id.text);
+
+        TypedNode ext = (TypedNode)$ex.tree;
+        if(!ext.getExprType().getPrimType().equals(Type.Primitive.ARRAY)) {
+            reporter.error($ex.tree, "Expression must be iterable. Found: " + ext.getExprType() + ".");
+        }
+
+        Type inner = ext.getExprType().getInnerType();
+        if(!((TypedNode)$id.tree).getExprType().equals(inner)){
+            reporter.error(old_id_tree,
+                "Variable must be of same type as elements of iterable:\n" +
+                String.format("   \%s: \%s\n", $id.text, ((TypedNode)$id.tree).getExprType()) +
+                String.format("   elements of iterable: \%s", inner)
+            );
         }
     } |
     ^(RETURN expression) |
@@ -136,8 +160,9 @@ if_part
 @init{ symtab.openScope(); }
 @after{ symtab.closeScope(); }:
     ^(ex=expression command*) {
-        if(!((TypedNode)$ex.tree).getExprType().equals(Type.Primitive.BOOLEAN)){
-            throw new InvalidTypeException("ERROR: expression must be of type boolean.");
+        TypedNode ext = (TypedNode)$ex.tree;
+        if(!(ext.getExprType().equals(Type.Primitive.BOOLEAN))){
+            reporter.error($ex.tree, "Expression must of be of type boolean. Found: " + ext.getExprType() + ".");
         }
     };
 
@@ -147,7 +172,8 @@ else_part
     command*;
 
 bool_op: AND | OR;
-same_op: PLUS | MINUS | LT | GT | LTE | GTE | EQ | NEQ | DIVIDES | MULTIPL | POWER;
+same_op: PLUS | MINUS | DIVIDES | MULTIPL | POWER;
+same_bool_op: LT | GT | LTE | GTE | EQ | NEQ;
 
 expression:
     operand |
@@ -158,16 +184,17 @@ expression:
         TypedNode ex2tree = (TypedNode)$ex2.tree;
 
         if(!(ex1tree.getExprType().equals(Type.Primitive.BOOLEAN))) {
-            throw new InvalidTypeException("ERROR: Expression of type boolean expected. Found: " + ex1tree.getExprType());
+            reporter.error(ex1tree, "Expression of type boolean expected. Found: " + ex1tree.getExprType());
         }else if(!ex2tree.getExprType().equals(Type.Primitive.BOOLEAN)) {
-            throw new InvalidTypeException("ERROR: Expression of type boolean expected. Found: " + ex2tree.getExprType());
+            reporter.error(ex2tree, "Expression of type boolean expected. Found: " + ex2tree.getExprType());
         }
     } |
     ^(op=same_op ex1=expression ex2=expression){
-        TypedNode ex1tree = (TypedNode)$ex1.tree;
-        TypedNode ex2tree = (TypedNode)$ex2.tree;
-
-        ((TypedNode)$op.tree).setExprType(ex1tree.getExprType());
+        checkSameOp($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
+    }|
+    ^(op=same_bool_op ex1=expression ex2=expression){
+        checkSameOp($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
+        ((TypedNode)$op.tree).setExprType(Type.Primitive.BOOLEAN);
     };
 
 

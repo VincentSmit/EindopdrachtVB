@@ -72,6 +72,11 @@ class GrammarTest(AntlrTest):
         self.assertEqual("(PROGRAM (while (< a b) (= a (+ b 1))))", stdout)
         self.assertEqual("", stderr)
 
+    def test_for(self):
+        stdout, stderr = self.compile(r"for a in b{ a + b; }")
+        self.assertEqual("(PROGRAM (for a b (+ a b)))", stdout)
+        self.assertEqual("", stderr)
+
     def test_empty_while(self):
         stdout, stderr = self.compile(r"while(a<b){}")
         self.assertEqual("(PROGRAM (while (< a b)))", stdout)

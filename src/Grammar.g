@@ -131,7 +131,7 @@ if_statement: if_part else_part? -> ^(IF if_part ELSE else_part?);
 
 while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
                      -> ^(WHILE expression command*);
-for_statement: FOR LPAREN IDENTIFIER IN expression RPAREN LCURLY command* RCURLY
+for_statement: FOR IDENTIFIER IN expression LCURLY command* RCURLY
                    -> ^(FOR IDENTIFIER<TypedNode> expression command*);
 return_statement: RETURN<ControlNode> expression SEMICOLON!;
 
