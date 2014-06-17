@@ -63,6 +63,8 @@ public class Type {
     }
 
     public String toString(){
+        if (this.innerType == null)
+            return String.format("Type<%s>", this.primType);
         return String.format("Type<%s, %s>", this.primType, this.innerType);
     }
 }

@@ -10,11 +10,11 @@ class CheckerTest(AntlrTest):
 
     def test_int_inference(self):
         stdout, stderr = self.compile("auto a = 3;")
-        self.assertIn("Setting 'a' to Type<INTEGER, null>", stdout.split("\n"))
+        self.assertIn("Setting 'a' to Type<INTEGER>", stdout.split("\n"))
 
     def test_boolean_inference(self):
         stdout, stderr = self.compile("auto a = true;")
-        self.assertIn("Setting 'a' to Type<BOOLEAN, null>", stdout.split("\n"))
+        self.assertIn("Setting 'a' to Type<BOOLEAN>", stdout.split("\n"))
 
     def test_if(self):
         stdout, stderr = self.compile("int a = 3; if(a){}")
@@ -22,7 +22,7 @@ class CheckerTest(AntlrTest):
 
     def test_bool_op(self):
         stdout, stderr = self.compile("bool a = 3;")
-        self.assertTrue("ERROR: Type mismatch: Type<BOOLEAN, null> vs Type<INTEGER, null>.")
+        self.assertTrue("ERROR: Type mismatch: Type<BOOLEAN> vs Type<INTEGER>.")
 
         stdout, stderr = self.compile("bool a = true;")
         self.assertFalse(stderr)
