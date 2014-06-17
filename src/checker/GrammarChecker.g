@@ -29,14 +29,6 @@ options {
 @members {
     private SymbolTable<IdEntry> symtab = new SymbolTable<>();
 
-    private boolean equalType(CommonTree a, CommonTree b){
-        TypedNode ta = (TypedNode)a;
-        TypedNode tb = (TypedNode)b;
-        return (ta.getExprType() != null &&
-                tb.getExprType() != null &&
-                ta.getExprType().equals(tb.getExprType()));
-    }
-
     private TypedNode getID(String id){
         return symtab.retrieve(id).getNode();
     }
@@ -65,34 +57,38 @@ command: declaration | expression | statement;
 
 declaration: var_declaration | scope_declaration;
 
-var_declaration
-    :   ^(VAR t=type id=IDENTIFIER<TypedNode> assignment?){
-
+var_declaration:
+    ^(VAR t=type id=IDENTIFIER<TypedNode> assignment?){
         try {
             symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
-            ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
         } catch (SymbolTableException e) {
-            System.err.print("ERROR: exception thrown by symboltable: ");
-            System.err.println(e.getMessage());
+            reporter.error($id.tree, String.format(
+                "but variable \%s was already declared \%s",
+                $id.text, reporter.pointer(symtab.retrieve($id.text).getNode())
+            ));
         }
-    }
-    ;
 
-scope_declaration
-@init{ symtab.openScope(); }
-@after{ symtab.closeScope(); }:
-    func_declaration;
+        ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
+    };
+
+scope_declaration: func_declaration;
 
 func_declaration:
-   ^(FUNC id=IDENTIFIER<TypedNode> t=type ^(ARGS arguments?) ^(BODY commands?)) {
-        try {
+   ^(FUNC id=IDENTIFIER<TypedNode> t=type ^(ARGS arguments?){
+       try {
             symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
-            ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
         } catch (SymbolTableException e) {
-            System.err.print("ERROR: exception thrown by symboltable: ");
-            System.err.println(e.getMessage());
-        } 
-    };
+            reporter.error($id.tree, String.format(
+                "but variable \%s was already declared \%s",
+                $id.text, reporter.pointer(symtab.retrieve($id.text).getNode())
+            ));
+        }
+
+        ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
+        symtab.openScope();
+   } ^(BODY commands?)) {
+        symtab.closeScope();
+   };
 
 argument: t=type id=IDENTIFIER{
     // Code duplication! :(
@@ -136,7 +132,7 @@ statement:
     ^(RETURN expression) |
     assignment;
 
-assignment: ^(ASSIGN id=IDENTIFIER<TypedNode> ex=expression){
+assignment: ^(a=ASSIGN id=IDENTIFIER<TypedNode> ex=expression){
     // Retrieve identifier from symtab.
     id_tree = getID($id.text);
 
@@ -146,13 +142,14 @@ assignment: ^(ASSIGN id=IDENTIFIER<TypedNode> ex=expression){
         log(String.format("Setting '\%s' to \%s", $id.text, ((TypedNode)$id.tree).getExprType()));
     }
 
-    if(!equalType($id.tree, $ex.tree)){
-        throw new InvalidTypeException(String.format(
-            "ERROR: Type mismatch: \%s vs \%s.",
-            ((TypedNode)$id.tree).getExprType(),
-            ((TypedNode)$ex.tree).getExprType()
-        ));
+    TypedNode idt = (TypedNode)$id.tree;
+    TypedNode ext = (TypedNode)$ex.tree;
 
+    if(!idt.getExprType().equals(ext.getExprType())){
+        reporter.error($a.tree, String.format(
+            "Cannot assign value of \%s to variable of type \%s.",
+            idt.getExprType(), ext.getExprType()
+        ));
     }
 };
 

@@ -17,26 +17,37 @@ public class Reporter{
         if (report) System.out.println(s);
     }
 
-    public void error(CommonTree n, String msg) throws InvalidTypeException{
-        StringWriter err = new StringWriter();
-        err.write(String.format(
+    /*
+     * Returns string with pointer to current node `n`.
+     *
+     * For example, it returns:
+     *    on line 3, char 2:
+     *       a+b
+     *        ^
+     */
+    public String pointer(CommonTree n){
+        StringWriter pointer = new StringWriter();
+
+        pointer.write(String.format(
             "on line %s, char %s:\n", n.getLine(), n.getCharPositionInLine() + 1
         ));
 
-        err.write("   ");
-        err.write(source[n.getLine() - 1]);
-        err.write('\n');
-        err.write("   ");
+        pointer.write("   ");
+        pointer.write(source[n.getLine() - 1]);
+        pointer.write('\n');
+        pointer.write("   ");
 
         for (int i=0; i < n.getCharPositionInLine(); i++){
-            err.write(' ');
+            pointer.write(' ');
         }
 
-        err.write('^');
-        err.write('\n');
-        err.write(msg);
-        err.write('\n');
+        pointer.write('^');
+        pointer.write('\n');
 
-        throw new InvalidTypeException(err.toString());
+        return pointer.toString();
+    }
+
+    public void error(CommonTree n, String msg) throws InvalidTypeException{
+        throw new InvalidTypeException(String.format("%s%s\n", pointer(n), msg));
     }
 }

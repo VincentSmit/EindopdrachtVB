@@ -8,6 +8,27 @@ class CheckerTest(AntlrTest):
     def test_function_declaration(self):
         stdout, stderr = self.compile("func a(int x) returns int{ x = x + 1; }")
 
+    def test_double_declaration(self):
+        # Primitive, then function
+        stdout, stderr = self.compile("int a;\nfunc a() returns int {}")
+        self.assertIn("but variable a was already declared on ", stderr)
+
+        # Function, then primitive
+        stdout, stderr = self.compile("func a() returns int {}; int a;")
+        self.assertIn("but variable a was already declared on ", stderr)
+
+        # Function, then function
+        stdout, stderr = self.compile("func a() returns int {};" * 2)
+        self.assertIn("but variable a was already declared on ", stderr)
+
+        # Primitive, then primitive
+        stdout, stderr = self.compile("int a; int a;")
+        self.assertIn("but variable a was already declared on ", stderr)
+
+        # Inside scope, should not trigger error
+        stdout, stderr = self.compile("func a() returns int{ int a; }")
+        self.assertFalse(stderr)
+
     def test_int_inference(self):
         stdout, stderr = self.compile("auto a = 3;")
         self.assertIn("Setting 'a' to Type<INTEGER>", stdout.split("\n"))
@@ -47,6 +68,12 @@ Variable must be of same type as elements of iterable:
         #     ^
         self.assertIn("   a+b;\n    ^\n", stderr)
         self.assertIn("on line 3, char 2", stderr)
+
+    def test_assign(self):
+        stdout, stderr = self.compile("int a = 'c';")
+        self.assertIn("Cannot assign value of Type<INTEGER> to variable of type Type<CHARACTER>.", stderr)
+
+
 
 
 if __name__ == '__main__':
