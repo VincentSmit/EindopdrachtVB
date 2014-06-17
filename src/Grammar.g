@@ -83,7 +83,8 @@ command:
     (IDENTIFIER ASSIGN) => assign_statement SEMICOLON! |
     declaration |
     statement |
-    expression SEMICOLON!;
+    expression SEMICOLON!|
+    SEMICOLON!;
 
 commands: command command?;
 
