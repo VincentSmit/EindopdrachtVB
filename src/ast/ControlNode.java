@@ -10,23 +10,25 @@ import org.antlr.runtime.RecognitionException;
  * for example RETURN, CONTINUE and BREAK. Each ControlNode contains
  * a 'parent' which it belongs to.
  */
-public class ControlNode extends TypedNode{
-    public CommonTree parent;
+@SuppressWarnings("unchecked")
+public class ControlNode extends CommonNode{
+    public CommonNode parent;
 
-    public ControlNode(Token t){
-        super(t);
-    }
-
+    public ControlNode(Token t){ super(t); }
     public ControlNode(ControlNode n){
         super(n);
         this.parent = n.getParent();
     }
 
-    public void setParent(CommonTree p){
+    public ControlNode getDuplicate(){
+        return new ControlNode(this);
+    }
+
+    public void setParent(CommonNode p){
         this.parent = p;
     }
 
-    public CommonTree getParent(){
+    public CommonNode getParent(){
         return this.parent;
     }
 }

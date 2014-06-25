@@ -19,7 +19,7 @@ import org.antlr.stringtemplate.StringTemplate;
 import reporter.Reporter;
 import checker.GrammarChecker;
 import ast.InvalidTypeException;
-import ast.TypedNodeAdaptor;
+import ast.CommonNodeAdaptor;
 
 /**
 * Program that creates and starts the Grammar lexer, parser, etc.
@@ -70,7 +70,7 @@ public class Grammar {
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
             GrammarParser parser = new GrammarParser(tokens);
-            parser.setTreeAdaptor(new TypedNodeAdaptor());
+            parser.setTreeAdaptor(new CommonNodeAdaptor());
 
             GrammarParser.program_return result = parser.program();
 
@@ -83,7 +83,7 @@ public class Grammar {
             if (!options.contains(Option.NO_CHECKER)) { // check the AST
                 CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
                 GrammarChecker checker = new GrammarChecker(nodes);
-                checker.setTreeAdaptor(new TypedNodeAdaptor());
+                checker.setTreeAdaptor(new CommonNodeAdaptor());
                 checker.setReporter(reporter);
                 checker.program();
             }

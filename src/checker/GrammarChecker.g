@@ -2,7 +2,7 @@ tree grammar GrammarChecker;
 
 options {
     tokenVocab=Grammar;
-    ASTLabelType=CommonTree;
+    ASTLabelType=CommonNode;
     output=AST;
 }
 
@@ -17,10 +17,7 @@ options {
     import symtab.SymbolTable;
     import symtab.SymbolTableException;
     import symtab.IdEntry;
-    import ast.Type;
-    import ast.TypedNode;
-    import ast.TypedNodeAdaptor;
-    import ast.InvalidTypeException;
+    import ast.*;
     import reporter.Reporter;
 }
 
@@ -37,7 +34,7 @@ options {
     public void setReporter(Reporter r){ this.reporter = r; }
     public void log(String msg){ this.reporter.log(msg); }
 
-    public void checkSameOp(CommonTree op, TypedNode ex1tree, TypedNode ex2tree) throws InvalidTypeException{
+    public void checkSameOp(CommonNode op, TypedNode ex1tree, TypedNode ex2tree) throws InvalidTypeException{
         if(!(ex1tree.getExprType().equals(ex2tree.getExprType()))){
             reporter.error(op, "Operator expected operands to be of same type. Found: " +
             ex1tree.getExprType() + " and " + ex2tree.getExprType() + ".");
@@ -90,7 +87,7 @@ func_declaration:
         symtab.closeScope();
    };
 
-argument: t=type id=IDENTIFIER{
+argument: t=type id=IDENTIFIER<TypedNode>{
     // Code duplication! :(
     try {
         symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
@@ -112,7 +109,7 @@ statement:
     } |
     ^(FOR id=IDENTIFIER ex=expression command*) {
         // Retrieve identifier from symtab.
-        CommonTree old_id_tree = id_tree;
+        CommonNode old_id_tree = id_tree;
         id_tree = getID($id.text);
 
         TypedNode ext = (TypedNode)$ex.tree;
@@ -200,13 +197,13 @@ type:
     composite_type ;
 
 primitive_type:
-    i=INTEGER    { ((TypedNode)$i.tree).setExprType(Type.Primitive.INTEGER); }|
-    b=BOOLEAN    { ((TypedNode)$b.tree).setExprType(Type.Primitive.BOOLEAN); }|
-    c=CHARACTER  { ((TypedNode)$c.tree).setExprType(Type.Primitive.CHARACTER); }|
-    a=AUTO       { ((TypedNode)$a.tree).setExprType(Type.Primitive.AUTO); };
+    i=INTEGER<TypedNode>    { ((TypedNode)$i.tree).setExprType(Type.Primitive.INTEGER); }|
+    b=BOOLEAN<TypedNode>    { ((TypedNode)$b.tree).setExprType(Type.Primitive.BOOLEAN); }|
+    c=CHARACTER<TypedNode>  { ((TypedNode)$c.tree).setExprType(Type.Primitive.CHARACTER); }|
+    a=AUTO<TypedNode>       { ((TypedNode)$a.tree).setExprType(Type.Primitive.AUTO); };
 
 composite_type:
-    ^(arr=ARRAY t=primitive_type expression){
+    ^(arr=ARRAY<TypedNode> t=primitive_type expression){
         Type ttype = ((TypedNode)$t.tree).getExprType();
         ((TypedNode)$arr.tree).setExprType(new Type(Type.Primitive.ARRAY, ttype));
     };

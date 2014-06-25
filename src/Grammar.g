@@ -4,6 +4,7 @@ options {
     k=1; // LL(1) - do not use LL(*)
     language=Java; // target language is Java (= default)
     output=AST; // build an AST
+    ASTLabelType=CommonNode;
 }
 
 tokens {
@@ -74,6 +75,7 @@ tokens {
 @header {
     import ast.TypedNode;
     import ast.ControlNode;
+    import ast.CommonNode;
 }
 
 // Parser rules

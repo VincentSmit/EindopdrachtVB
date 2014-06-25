@@ -2,7 +2,7 @@ tree grammar GrammarTAM;
 
 options {
     tokenVocab=Grammar;
-    ASTLabelType=CommonTree; // AST nodes are of type CommonTree
+    ASTLabelType=CommonNode; // AST nodes are of type CommonTree
 }
 
 @header {
@@ -11,6 +11,7 @@ options {
     import java.util.HashMap;
     import java.util.Stack;
     import java.util.List;
+    import ast.CommonNode;
 }
 
 @members {
