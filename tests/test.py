@@ -52,7 +52,7 @@ def check_antlr():
 def compile_grammar(stdin=None, stdout=None, stderr=None):
     with set_cwd(GRAMMAR_DIR):
         subprocess.call(["java", "-jar", ANTLR_PATH, GRAMMAR_FILE, GRAMMAR_CHECKER_FILE, GRAMMAR_TAM_FILE])
-        subprocess.call(["javac", "-classpath", CLASSPATH, "Grammar.java"])
+        subprocess.call(["javac", "-Xlint:unchecked", "-classpath", CLASSPATH, "Grammar.java"])
 
 class AntlrTest(unittest.TestCase):
     @classmethod

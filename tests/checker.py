@@ -3,7 +3,29 @@ from test import AntlrTest
 
 class CheckerTest(AntlrTest):
     def compile(self, grammar):
-        return super(CheckerTest, self).compile(grammar, options=("-report",))
+        return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
+
+    def test_continue(self):
+        stdout, stderr = self.compile("continue;")
+        self.assertIn("'continue' outside loop.", stderr)
+
+        stdout, stderr = self.compile("int i;\nint[1] a;\nfor i in a{ continue; } \n")
+        self.assertFalse(stderr)
+
+        # Don't know why you would use this syntax but hey..
+        stdout, stderr = self.compile("while(true){ func a () returns int { continue; } }")
+        self.assertIn("'continue' outside loop.", stderr)
+
+    def test_break(self):
+        stdout, stderr = self.compile("break;")
+        self.assertIn("'break' outside loop.", stderr)
+
+        stdout, stderr = self.compile("int i;\nint[1] a;\nfor i in a{ break; } \n")
+        self.assertFalse(stderr)
+
+        # Don't know why you would use this syntax but hey..
+        stdout, stderr = self.compile("while(true){ func a () returns int { break; } }")
+        self.assertIn("'break' outside loop.", stderr)
 
     def test_function_declaration(self):
         stdout, stderr = self.compile("func a(int x) returns int{ x = x + 1; }")
@@ -72,9 +94,6 @@ Variable must be of same type as elements of iterable:
     def test_assign(self):
         stdout, stderr = self.compile("int a = 'c';")
         self.assertIn("Cannot assign value of Type<INTEGER> to variable of type Type<CHARACTER>.", stderr)
-
-
-
 
 if __name__ == '__main__':
     import unittest

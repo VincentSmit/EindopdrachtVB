@@ -88,7 +88,7 @@ command:
     expression SEMICOLON!|
     SEMICOLON!;
 
-commands: command command?;
+commands: command commands?;
 
 // DECLARATIONS 
 declaration:
@@ -121,8 +121,11 @@ statement:
     while_statement |
     return_statement |
     for_statement |
-    BREAK<ControlNode> SEMICOLON! |
-    CONTINUE<ControlNode> SEMICOLON!;
+
+    // Defining both tokens as <ControlNode>s throws a cryptic error. Converting them later
+    // in GrammarChecker works :-/.
+    BREAK SEMICOLON! |
+    CONTINUE SEMICOLON!;
 
 if_part: IF LPAREN expression RPAREN LCURLY command* RCURLY
              -> expression command*;
@@ -134,8 +137,8 @@ if_statement: if_part else_part? -> ^(IF if_part ELSE else_part?);
 
 while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
                      -> ^(WHILE expression command*);
-for_statement: FOR IDENTIFIER IN expression LCURLY command* RCURLY
-                   -> ^(FOR IDENTIFIER<TypedNode> expression command*);
+for_statement: FOR IDENTIFIER IN expression LCURLY commands? RCURLY
+                   -> ^(FOR IDENTIFIER<TypedNode> expression commands?);
 return_statement: RETURN<ControlNode> expression SEMICOLON!;
 
 assign_statement: IDENTIFIER ASSIGN expression

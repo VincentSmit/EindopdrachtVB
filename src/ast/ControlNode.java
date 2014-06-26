@@ -1,9 +1,7 @@
 package ast;
 
-import org.antlr.runtime.tree.CommonTree;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.CommonToken;
-import org.antlr.runtime.RecognitionException;
 
 /*
  * Control nodes alter the flow of execution of a program. These are
@@ -14,6 +12,8 @@ import org.antlr.runtime.RecognitionException;
 public class ControlNode extends CommonNode{
     public CommonNode parent;
 
+    public ControlNode(CommonNode n){ super(n); }
+    public ControlNode(int n){ super(new CommonToken(n)); };
     public ControlNode(Token t){ super(t); }
     public ControlNode(ControlNode n){
         super(n);

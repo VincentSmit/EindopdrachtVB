@@ -14,11 +14,14 @@ options {
 
 @header {
     package checker;
+    import java.util.Stack;
+    import java.util.EmptyStackException;
     import symtab.SymbolTable;
     import symtab.SymbolTableException;
     import symtab.IdEntry;
     import ast.*;
     import reporter.Reporter;
+    import org.javatuples.Pair;
 }
 
 // Alter code generation so catch-clauses get replaced with this action. 
@@ -29,6 +32,9 @@ options {
     private TypedNode getID(String id){
         return symtab.retrieve(id).getNode();
     }
+
+    // Keep a stack of all loops within functions.
+    private Stack<Pair<FunctionNode, Stack<CommonNode>>> loops = new Stack<Pair<FunctionNode, Stack<CommonNode>>>();
 
     public Reporter reporter;
     public void setReporter(Reporter r){ this.reporter = r; }
@@ -45,11 +51,18 @@ options {
 }
 
 program
-@init { symtab.openScope(); }
-    : ^(PROGRAM command+) { symtab.closeScope(); }
-    ;
+@init {
+    symtab.openScope();
+}
+@after {
+    symtab.closeScope();
+    loops.pop();
+}
+: ^(p=PROGRAM<FunctionNode>{
+    loops.push(Pair.with((FunctionNode)$p.tree, new Stack<CommonNode>()));
+} command+);
 
-commands: command+;
+commands: command commands?;
 command: declaration | expression | statement;
 
 declaration: var_declaration | scope_declaration;
@@ -71,8 +84,10 @@ var_declaration:
 scope_declaration: func_declaration;
 
 func_declaration:
-   ^(FUNC id=IDENTIFIER<TypedNode> t=type ^(ARGS arguments?){
-       try {
+    ^(f=FUNC<FunctionNode> id=IDENTIFIER<TypedNode> t=type ^(ARGS arguments?){
+        loops.push(Pair.with((FunctionNode)$f.tree, new Stack<CommonNode>()));
+
+        try {
             symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
         } catch (SymbolTableException e) {
             reporter.error($id.tree, String.format(
@@ -85,6 +100,7 @@ func_declaration:
         symtab.openScope();
    } ^(BODY commands?)) {
         symtab.closeScope();
+        loops.pop();
    };
 
 argument: t=type id=IDENTIFIER<TypedNode>{
@@ -101,22 +117,30 @@ arguments: argument (arguments)?;
 
 statement:
     ^(IF if_part ELSE else_part) |
-    ^(WHILE ex=expression command*) {
+    ^(w=WHILE{
+        // Add this loop to the stack of current loops
+        loops.peek().getValue1().push($w.tree);
+     } ex=expression command*) {
         TypedNode ext = (TypedNode)$ex.tree;
         if(!ext.getExprType().equals(Type.Primitive.BOOLEAN)) {
             reporter.error($ex.tree, "Expression must be of type boolean. Found: " + ext.getExprType() + ".");
         }
     } |
-    ^(FOR id=IDENTIFIER ex=expression command*) {
+    ^(f=FOR{
+        // Add this loop to the stack of current loops
+        loops.peek().getValue1().push($f.tree);
+     } id=IDENTIFIER ex=expression commands?) {
         // Retrieve identifier from symtab.
         CommonNode old_id_tree = id_tree;
         id_tree = getID($id.text);
 
+        // Check if argument is indeed an array
         TypedNode ext = (TypedNode)$ex.tree;
         if(!ext.getExprType().getPrimType().equals(Type.Primitive.ARRAY)) {
             reporter.error($ex.tree, "Expression must be iterable. Found: " + ext.getExprType() + ".");
         }
 
+        // Compare innertype of array with identifier type
         Type inner = ext.getExprType().getInnerType();
         if(!((TypedNode)$id.tree).getExprType().equals(inner)){
             reporter.error(old_id_tree,
@@ -127,6 +151,24 @@ statement:
         }
     } |
     ^(RETURN expression) |
+    b=BREAK<ControlNode>{
+        try{
+            CommonNode loop = loops.peek().getValue1().peek();
+        } catch(EmptyStackException e){
+            reporter.error($b.tree, "'break' outside loop.");
+        }
+
+        ((ControlNode)$b.tree).setParent(loops.peek().getValue0());
+    }|
+    c=CONTINUE<ControlNode>{
+        try{
+            CommonNode loop = loops.peek().getValue1().peek();
+        } catch(EmptyStackException e){
+            reporter.error($c.tree, "'continue' outside loop.");
+        }
+
+        ((ControlNode)$c.tree).setParent(loops.peek().getValue0());
+    }|
     assignment;
 
 assignment: ^(a=ASSIGN id=IDENTIFIER<TypedNode> ex=expression){

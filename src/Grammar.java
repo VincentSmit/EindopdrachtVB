@@ -81,7 +81,7 @@ public class Grammar {
             }
 
             if (!options.contains(Option.NO_CHECKER)) { // check the AST
-                CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
+                CommonTreeNodeStream nodes = new CommonTreeNodeStream(new CommonNodeAdaptor(), tree);
                 GrammarChecker checker = new GrammarChecker(nodes);
                 checker.setTreeAdaptor(new CommonNodeAdaptor());
                 checker.setReporter(reporter);
@@ -94,7 +94,7 @@ public class Grammar {
         }*/ catch (RecognitionException e) {
             System.err.print("ERROR: recognition exception thrown by compiler ");
             System.err.println(e.getMessage());
-            //e.printStackTrace();
+            e.printStackTrace();
         } catch (Exception e) {
             System.err.print("ERROR: uncaught exception thrown by compiler: ");
             System.err.println(e.getMessage());
