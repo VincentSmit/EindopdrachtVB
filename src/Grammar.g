@@ -139,7 +139,7 @@ while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
                      -> ^(WHILE expression command*);
 for_statement: FOR IDENTIFIER IN expression LCURLY commands? RCURLY
                    -> ^(FOR IDENTIFIER<TypedNode> expression commands?);
-return_statement: RETURN<ControlNode> expression SEMICOLON!;
+return_statement: RETURN expression SEMICOLON -> ^(RETURN expression);
 
 assign_statement: IDENTIFIER ASSIGN expression
                     -> ^(ASSIGN IDENTIFIER<TypedNode> expression);

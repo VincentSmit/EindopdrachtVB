@@ -41,6 +41,13 @@ options {
     public void log(String msg){ this.reporter.log(msg); }
 
     public void checkSameOp(CommonNode op, TypedNode ex1tree, TypedNode ex2tree) throws InvalidTypeException{
+        // If one of the typednodes has type auto, assume type of other typednode.
+        if(ex1tree.getExprType().getPrimType().equals(Type.Primitive.AUTO)){
+            ex1tree.setExprType(ex2tree.getExprType());
+        } else if(ex2tree.getExprType().getPrimType().equals(Type.Primitive.AUTO)){
+            ex2tree.setExprType(ex1tree.getExprType());
+        }
+
         if(!(ex1tree.getExprType().equals(ex2tree.getExprType()))){
             reporter.error(op, "Operator expected operands to be of same type. Found: " +
             ex1tree.getExprType() + " and " + ex2tree.getExprType() + ".");
@@ -150,7 +157,14 @@ statement:
             );
         }
     } |
-    ^(RETURN expression) |
+    ^(r=RETURN<ControlNode> ex=expression){
+        // PROGRAM is a special 'function node', but doesn't allow return statements.
+        if(loops.size() == 1){
+            reporter.error(r, "Return must be used in function.");
+        }
+
+        ((ControlNode)$r.tree).setParent(loops.peek().getValue0());
+    }|
     b=BREAK<ControlNode>{
         try{
             CommonNode loop = loops.peek().getValue1().peek();

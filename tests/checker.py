@@ -5,6 +5,25 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
 
+    def test_return(self):
+        # Return in root.
+        stdout, stderr = self.compile("return 1;")
+        self.assertIn("Return must be used in function.", stderr)
+
+        # Return unknown type
+        stdout, stderr = self.compile("func a() returns int{ auto b; return b; }")
+        self.assertIn("Setting 'b' to Type<INTEGER>", stdout.split("\n"))
+
+        # Return wrong type
+        #stdout, stderr = self.compile("func a() returns int{ return true; }")
+        #self.assertIn("Expected Type<INTEGER>, but got Type<BOOLEAN>", stderr)
+
+        # Return known type
+        #stdout, stderr = self.compile("func a() returns auto{ return true; }")
+        #self.assertIn("Setting 'a' to Type<BOOLEAN>", stdout.split("\n"))
+
+class a:
+
     def test_continue(self):
         stdout, stderr = self.compile("continue;")
         self.assertIn("'continue' outside loop.", stderr)
