@@ -41,6 +41,13 @@ options {
     public void log(String msg){ this.reporter.log(msg); }
 
     public void checkSameOp(CommonNode op, TypedNode ex1tree, TypedNode ex2tree) throws InvalidTypeException{
+        // If one of the typednodes has type auto, assume type of other typednode.
+        if(ex1tree.getExprType().getPrimType().equals(Type.Primitive.AUTO)){
+            ex1tree.setExprType(ex2tree.getExprType());
+        } else if(ex2tree.getExprType().getPrimType().equals(Type.Primitive.AUTO)){
+            ex2tree.setExprType(ex1tree.getExprType());
+        }
+
         if(!(ex1tree.getExprType().equals(ex2tree.getExprType()))){
             reporter.error(op, "Operator expected operands to be of same type. Found: " +
             ex1tree.getExprType() + " and " + ex2tree.getExprType() + ".");
@@ -84,7 +91,7 @@ var_declaration:
 scope_declaration: func_declaration;
 
 func_declaration:
-    ^(f=FUNC<FunctionNode> id=IDENTIFIER<TypedNode> t=type ^(ARGS arguments?){
+    ^(f=FUNC<FunctionNode> id=IDENTIFIER<TypedNode> t=type{
         loops.push(Pair.with((FunctionNode)$f.tree, new Stack<CommonNode>()));
 
         try {
@@ -97,8 +104,11 @@ func_declaration:
         }
 
         ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
+        ((FunctionNode)$f.tree).setExprType(((TypedNode)$t.tree).getExprType());
+        ((FunctionNode)$f.tree).setName($id.text);
         symtab.openScope();
-   } ^(BODY commands?)) {
+
+    } ^(ARGS arguments?) ^(BODY commands?)) {
         symtab.closeScope();
         loops.pop();
    };
@@ -109,9 +119,16 @@ argument: t=type id=IDENTIFIER<TypedNode>{
         symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
         ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
     } catch (SymbolTableException e) {
-        System.err.print("ERROR: exception thrown by symboltable: ");
-        System.err.println(e.getMessage());
-    } 
+        reporter.error($id.tree, e.getMessage());
+    }
+
+    FunctionNode function = loops.peek().getValue0();
+    function.getVars().add((TypedNode)$id.tree);
+
+    log(String.format(
+        "Register argument \%s of \%s to \%s().",
+        $id.text, ((TypedNode)$id.tree).getExprType(), function.getName()
+    ));
 };
 arguments: argument (arguments)?;
 
@@ -150,7 +167,40 @@ statement:
             );
         }
     } |
-    ^(RETURN expression) |
+    ^(r=RETURN<ControlNode> ex=expression){
+        // Set parent (function) of this control node (break, continue)
+        ControlNode ret = (ControlNode)$r.tree;
+        ret.setParent(loops.peek().getValue0());
+
+        FunctionNode func = (FunctionNode)ret.getParent();
+        TypedNode expr = (TypedNode)$ex.tree;
+
+        // PROGRAM is a special 'function node', but doesn't allow return statements.
+        if(loops.size() == 1){
+            reporter.error(r, "Return must be used in function.");
+        }
+
+        // Set expression type of function if type inference requested
+        if (func.getExprType().getPrimType() == Type.Primitive.AUTO){
+            func.setExprType(expr.getExprType());
+            log(String.format("Setting '\%s' to \%s", func.getName(), func.getExprType()));
+        }
+
+        // If we don't know the type of `expr`, throw an error.
+        System.out.println(expr.getExprType());
+        if (expr.getExprType().getPrimType() == Type.Primitive.AUTO){
+            reporter.error(ret, "Return value must have type, not auto (maybe we did not discover its type yet?)");
+        }
+
+        // Test equivalence of types
+        if (!func.getExprType().equals(expr.getExprType())){
+            reporter.error(ret, String.format(
+                "Expected \%s, but got \%s.", func.getExprType(), expr.getExprType())
+            );
+        }
+
+
+    }|
     b=BREAK<ControlNode>{
         try{
             CommonNode loop = loops.peek().getValue1().peek();
