@@ -1,29 +1,24 @@
 package ast;
 
-import org.antlr.runtime.tree.CommonTree;   
 import org.antlr.runtime.Token;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.RecognitionException;
 
-public class TypedNode extends CommonTree {
-    //Type van deze Expressie
+@SuppressWarnings("unchecked")
+public class TypedNode extends CommonNode{
     private Type exprType;
 
-    public TypedNode() {
-        super();
-    }    
-
-    public TypedNode(Token t) {
-        super(t);
-    }
-
+    public TypedNode(){ super(); }
+    public TypedNode(Token t){ super(t); }
+    public TypedNode(CommonNode n){ super(n); }
     public TypedNode(TypedNode n) {
         super(n);
         this.exprType = n.getExprType();
     }
 
-    public TypedNode(CommonTree n){
-        super(n);
+
+    public TypedNode getDuplicate(){
+        return new TypedNode(this);
     }
 
     /*
@@ -54,10 +49,6 @@ public class TypedNode extends CommonTree {
             // Type.Primitives.
             throw new RecognitionException();
         }
-    }
-
-    public TypedNode dupNode() {
-        return new TypedNode(this);
     }
 
     public Type getExprType() {

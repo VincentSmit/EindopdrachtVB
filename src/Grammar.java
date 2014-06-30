@@ -18,8 +18,9 @@ import org.antlr.stringtemplate.StringTemplate;
 
 import reporter.Reporter;
 import checker.GrammarChecker;
+import TAM.GrammarTAM;
 import ast.InvalidTypeException;
-import ast.TypedNodeAdaptor;
+import ast.CommonNodeAdaptor;
 
 /**
 * Program that creates and starts the Grammar lexer, parser, etc.
@@ -60,41 +61,51 @@ public class Grammar {
         parseOptions(args);
 
         try {
+            // Setup I/O sources
             InputStream in = inputFile == null ? System.in : new FileInputStream(inputFile);
             String source = (new Scanner(in).useDelimiter("\\A")).next();
             Reporter reporter = new Reporter(options.contains(Option.REPORT), source);
 
+            // Parse tokens through lexer and tokenizer
             GrammarLexer lexer = new GrammarLexer(new ANTLRInputStream(
                 new ByteArrayInputStream(source.getBytes(StandardCharsets.UTF_8)))
             );
             CommonTokenStream tokens = new CommonTokenStream(lexer);
 
+            // Parse tokens as tree
             GrammarParser parser = new GrammarParser(tokens);
-            parser.setTreeAdaptor(new TypedNodeAdaptor());
-
+            parser.setTreeAdaptor(new CommonNodeAdaptor());
             GrammarParser.program_return result = parser.program();
 
+            // Print parsed AST
             CommonTree tree = (CommonTree) result.getTree();
-
-            if (options.contains(Option.AST)) { // print the AST as string
+            if (options.contains(Option.AST)) {
                 System.out.println(tree.toStringTree());
             }
 
-            if (!options.contains(Option.NO_CHECKER)) { // check the AST
-                CommonTreeNodeStream nodes = new CommonTreeNodeStream(tree);
+            // Decorate tree with types
+            if (!options.contains(Option.NO_CHECKER)) {
+                CommonTreeNodeStream nodes = new CommonTreeNodeStream(new CommonNodeAdaptor(), tree);
                 GrammarChecker checker = new GrammarChecker(nodes);
-                checker.setTreeAdaptor(new TypedNodeAdaptor());
+                checker.setTreeAdaptor(new CommonNodeAdaptor());
                 checker.setReporter(reporter);
                 checker.program();
             }
 
-        } /*catch (GrammarException e) {
-            System.err.print("ERROR: GrammarException thrown by compiler: ");
-            System.err.println(e.getMessage());
-        }*/ catch (RecognitionException e) {
+            // Generate TAM code
+            if (options.contains(Option.TAM)){
+                CommonTreeNodeStream nodes = new CommonTreeNodeStream(new CommonNodeAdaptor(), tree);
+                GrammarTAM tam = new GrammarTAM(nodes);
+                tam.program();
+            }
+
+            // Generate Python bytecode
+            // Not yet :)
+
+        } catch (RecognitionException e) {
             System.err.print("ERROR: recognition exception thrown by compiler ");
             System.err.println(e.getMessage());
-            //e.printStackTrace();
+            e.printStackTrace();
         } catch (Exception e) {
             System.err.print("ERROR: uncaught exception thrown by compiler: ");
             System.err.println(e.getMessage());
@@ -134,7 +145,7 @@ public class Grammar {
         NO_CHECKER,
         NO_INTERPRETER,
         REPORT,
-        CODE_GENERATOR;
+        TAM;
 
         private Option() {
             this.text = name().toLowerCase();

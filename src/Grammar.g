@@ -4,6 +4,7 @@ options {
     k=1; // LL(1) - do not use LL(*)
     language=Java; // target language is Java (= default)
     output=AST; // build an AST
+    ASTLabelType=CommonNode;
 }
 
 tokens {
@@ -74,6 +75,7 @@ tokens {
 @header {
     import ast.TypedNode;
     import ast.ControlNode;
+    import ast.CommonNode;
 }
 
 // Parser rules
@@ -86,7 +88,7 @@ command:
     expression SEMICOLON!|
     SEMICOLON!;
 
-commands: command command?;
+commands: command commands?;
 
 // DECLARATIONS 
 declaration:
@@ -119,8 +121,11 @@ statement:
     while_statement |
     return_statement |
     for_statement |
-    BREAK<ControlNode> SEMICOLON! |
-    CONTINUE<ControlNode> SEMICOLON!;
+
+    // Defining both tokens as <ControlNode>s throws a cryptic error. Converting them later
+    // in GrammarChecker works :-/.
+    BREAK SEMICOLON! |
+    CONTINUE SEMICOLON!;
 
 if_part: IF LPAREN expression RPAREN LCURLY command* RCURLY
              -> expression command*;
@@ -132,9 +137,9 @@ if_statement: if_part else_part? -> ^(IF if_part ELSE else_part?);
 
 while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
                      -> ^(WHILE expression command*);
-for_statement: FOR IDENTIFIER IN expression LCURLY command* RCURLY
-                   -> ^(FOR IDENTIFIER<TypedNode> expression command*);
-return_statement: RETURN<ControlNode> expression SEMICOLON!;
+for_statement: FOR IDENTIFIER IN expression LCURLY commands? RCURLY
+                   -> ^(FOR IDENTIFIER<TypedNode> expression commands?);
+return_statement: RETURN expression SEMICOLON -> ^(RETURN expression);
 
 assign_statement: IDENTIFIER ASSIGN expression
                     -> ^(ASSIGN IDENTIFIER<TypedNode> expression);

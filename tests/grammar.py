@@ -3,6 +3,7 @@ from test import AntlrTest
 
 GRAMMAR_OPTS = ("-no_checker", "-ast")
 
+
 class GrammarTest(AntlrTest):
     def compile(self, grammar):
         return super(GrammarTest, self).compile(grammar, options=GRAMMAR_OPTS)
