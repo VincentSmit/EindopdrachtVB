@@ -74,6 +74,7 @@ tokens {
 
 @header {
     import ast.TypedNode;
+    import ast.IdentifierNode;
     import ast.ControlNode;
     import ast.CommonNode;
 }
@@ -96,8 +97,8 @@ declaration:
     scope_declaration;
 
 var_declaration: type IDENTIFIER (a=var_assignment)? SEMICOLON
-                     -> {a == null}? ^(VAR type IDENTIFIER<TypedNode>)
-                     -> ^(VAR type IDENTIFIER<TypedNode>) ^(ASSIGN IDENTIFIER<TypedNode> $a);
+                     -> {a == null}? ^(VAR type IDENTIFIER<IdentifierNode>)
+                     -> ^(VAR type IDENTIFIER<IdentifierNode>) ^(ASSIGN IDENTIFIER<IdentifierNode> $a);
 
 var_assignment: ASSIGN! expression;
 assignment: ASSIGN expression;
@@ -107,7 +108,7 @@ scope_declaration:
 //    class_declaration;
 
 func_declaration: FUNC IDENTIFIER LPAREN arguments? RPAREN (RETURNS t=type)? LCURLY commands? RCURLY
-                      -> {t == null}? ^(FUNC IDENTIFIER IDENTIFIER<TypedNode>["auto"] ^(ARGS arguments?) ^(BODY commands?))
+                      -> {t == null}? ^(FUNC IDENTIFIER IDENTIFIER<IdentifierNode>["auto"] ^(ARGS arguments?) ^(BODY commands?))
                       -> ^(FUNC IDENTIFIER type ^(ARGS arguments?) ^(BODY commands?));
 
 
@@ -138,11 +139,11 @@ if_statement: if_part else_part? -> ^(IF if_part ELSE else_part?);
 while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
                      -> ^(WHILE expression command*);
 for_statement: FOR IDENTIFIER IN expression LCURLY commands? RCURLY
-                   -> ^(FOR IDENTIFIER<TypedNode> expression commands?);
+                   -> ^(FOR IDENTIFIER<IdentifierNode> expression commands?);
 return_statement: RETURN expression SEMICOLON -> ^(RETURN expression);
 
 assign_statement: IDENTIFIER ASSIGN expression
-                    -> ^(ASSIGN IDENTIFIER<TypedNode> expression);
+                    -> ^(ASSIGN IDENTIFIER<IdentifierNode> expression);
 
 // Expressions, order of operands:
 // ()
@@ -166,7 +167,7 @@ call_expression: IDENTIFIER LPAREN expression_list? RPAREN
 
 operand:
     LPAREN! expression RPAREN! |
-    IDENTIFIER<TypedNode> |
+    IDENTIFIER<IdentifierNode> |
     NUMBER<TypedNode> |
     STRING_VALUE<TypedNode>|
     bool;

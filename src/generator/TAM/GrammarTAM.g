@@ -2,24 +2,32 @@ tree grammar GrammarTAM;
 
 options {
     tokenVocab=Grammar;
-    ASTLabelType=CommonNode; // AST nodes are of type CommonTree
+    ASTLabelType=CommonNode;
 }
 
 @header {
-    package TAM;
+    package generator.TAM;
+    import ast.*;
     import java.util.Map;
     import java.util.HashMap;
     import java.util.Stack;
     import java.util.List;
-    import ast.CommonNode;
 }
 
 @members {
+    // Keep track of the 'current' function
+    private Stack<FunctionNode> funcs = new Stack<>();
+
     // Used to determine at which position on the stack a variable is kept.
-    private List<String> vars = new ArrayList<String>();
     private String label;
     private String comment;
 
+    /*
+     * Prints code `s` formatted nicely.
+     *
+     * @requires: s != null
+     * @ensures: this.label == null && this.comment == null;
+     */
     public void emit(String s){
         // Print label
         if(label != null){
@@ -44,26 +52,64 @@ options {
         System.out.println("");
     }
 
+    /*
+     * Prints code `s` formatted nicely according to emit(String).
+     *
+     * @requires: s != null
+     * @ensures: this.label == null && this.comment == null;
+     */
     public void emit(String s, String comment){
         this.comment = comment;
         emit(s);
     }
 
+    /*
+     * Set label property for following emit() call.
+     *
+     * @requires: s != null
+     * @ensures: this.label != null
+     */
     public void emitLabel(String s, int ix){
         this.label = s + ix + ":";
     }
 
-    private void var(String s){
-        vars.add(s);
-        emit("PUSH 1", "var " + s);
+    private void prepareFunction(FunctionNode f){
+        funcs.push(f);
+        emit(String.format("PUSH \%s", f.getVars().size()));
     }
 
-    private String addr(String id){
-        return vars.indexOf(id) + "[SB]";
+    private void var(String s){
+    }
+
+    /*
+     * Determines memory address of given identifier (which might be a pointer,
+     * in case of an array).
+     *
+     * @return: String formatted as {offset:int}[{base:string}]
+     */
+    private String addr(IdentifierNode id){
+        int lookupScopeLevel = (Integer)funcs.peek().getMemAddr().getValue0();
+        int idScopeLevel = (Integer)id.getMemAddr().getValue0();
+        int diff = lookupScopeLevel - idScopeLevel;
+
+        String base = "LB"; // Local base
+        if (diff == 6 || lookupScopeLevel == 0){
+            // Declared as global, so we need to fetch it from stack base
+            base = "SB";
+        } else if (diff > 0){
+            // Declared in one of enclosing functions, so we need to use
+            // pseudoregisters L1, L2 ... L6.
+            base = "L" + diff;
+        }
+
+        // Return offset[base]
+        return String.format("\%s[\%s]", id.getMemAddr().getValue1(), base);
     }
 }
 
-program: ^(PROGRAM import_statement* command+){
+program: ^(p=PROGRAM<FunctionNode> {
+    prepareFunction((FunctionNode)p);
+} import_statement* command+){
     emit("HALT");
 };
     
@@ -85,11 +131,11 @@ while_statement
     };
 
 
-var_declaration: 
-    ^(VAR type id=IDENTIFIER){ var($id.text); };
+// Already handled in function/program declaration
+var_declaration: ^(VAR type id=IDENTIFIER);
 
 assignment: ^(ASSIGN id=IDENTIFIER expression){
-    emit("STORE(1) " + addr($id.text));
+    emit("STORE(1) " + addr((IdentifierNode)id));
 };
 
 
@@ -113,7 +159,7 @@ expression:
 
 operand: 
     id=IDENTIFIER{
-        emit("LOAD " + addr($id.text), $id.text);
+       emit("LOAD(1) " + addr((IdentifierNode)id));
     } |
     n=NUMBER{
         emit("LOADL " + $n.text);

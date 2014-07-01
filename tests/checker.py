@@ -1,10 +1,65 @@
 from __future__ import unicode_literals
 from test import AntlrTest
+import time
 
+class UseThisForDebugging:
+    def really(self):
+        print(stdout)
+        print(stderr)
+        time.sleep(1)
 
 class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
+
+    def test_nesting(self):
+        nested_horror = ("""
+        func a0() returns int{
+            func a1() returns int{
+                func a2() returns int{
+                    func a3() returns int{
+                        func a4() returns int{
+                            func a5() returns int{
+                                func a6() returns int{
+                                    func a7() returns int{}
+                                }}}}}}}""")
+
+        # Remove line with a7. Should work, as we can work 6 levels back
+        six_levels = nested_horror.split("\n")
+        six_levels = "\n".join(six_levels[0:-2] + six_levels[-1:])
+        stdout, stderr = self.compile(six_levels)
+
+        self.assertFalse(stderr)
+
+        # Test 7 levels of nesting. Should return error.
+        stdout, stderr = self.compile(nested_horror)
+        self.assertIn("You can only nest functions 6 levels deep", stderr)
+
+    def test_memory_addresses(self):
+        stdout, stderr = self.compile("""
+        int a;
+        int b;
+
+        func c() returns int{
+            int d;
+            int[3] e;
+        }""")
+
+        self.assertIn("Set relative memory address of a to (0, 0)", stdout)
+        self.assertIn("Set relative memory address of b to (0, 1)", stdout)
+        self.assertIn("Set relative memory address of d to (1, 0)", stdout)
+        self.assertIn("Set relative memory address of e to (1, 1)", stdout)
+
+    def test_variable_scope(self):
+        stdout, stderr = self.compile("""
+        int a;
+
+        func b() returns int{
+            int c;
+        }
+        """)
+        self.assertIn("Setting scope of a to __root__()", stdout)
+        self.assertIn("Setting scope of c to b()", stdout)
 
     def test_return(self):
         # Return in root.
@@ -46,12 +101,18 @@ class CheckerTest(AntlrTest):
         self.assertIn("'break' outside loop.", stderr)
 
     def test_function_declaration(self):
+        # Check argument setting
         stdout, stderr = self.compile("func a(int x) returns int{ x = x + 1; }")
         self.assertIn("Register argument x of Type<INTEGER> to a()", stdout)
 
         stdout, stderr = self.compile("func a(int x, char y) returns int{ x = x + 1; }")
         self.assertIn("Register argument x of Type<INTEGER> to a()", stdout)
         self.assertIn("Register argument y of Type<CHARACTER> to a()", stdout)
+
+        # Check parent setting
+        stdout, stderr = self.compile("func a() returns int{ func b() returns int{} }")
+        self.assertIn("Setting a.parent = __root__", stdout)
+        self.assertIn("Setting b.parent = a", stdout)
 
     def test_double_declaration(self):
         # Primitive, then function

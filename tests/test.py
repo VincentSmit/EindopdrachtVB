@@ -25,7 +25,7 @@ ANTLR_PATH = os.path.join(ANTLR_DIR, ANTLR_FILE)
 GRAMMAR_DIR = os.path.join(THIS_DIR, "../src")
 GRAMMAR_FILE = os.path.join(GRAMMAR_DIR, "Grammar.g")
 GRAMMAR_CHECKER_FILE = os.path.join(GRAMMAR_DIR, "checker/GrammarChecker.g")
-GRAMMAR_TAM_FILE = os.path.join(GRAMMAR_DIR, "TAM/GrammarTAM.g")
+GRAMMAR_TAM_FILE = os.path.join(GRAMMAR_DIR, "generator/TAM/GrammarTAM.g")
 
 CLASSPATH = ".:%s:%s" % (ANTLR_PATH, os.environ.get("CLASSPATH"))
 

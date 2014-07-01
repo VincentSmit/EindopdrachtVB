@@ -29,7 +29,7 @@ options {
 @members {
     private SymbolTable<IdEntry> symtab = new SymbolTable<>();
 
-    private TypedNode getID(String id){
+    private IdentifierNode getID(String id){
         return symtab.retrieve(id).getNode();
     }
 
@@ -67,6 +67,8 @@ program
 }
 : ^(p=PROGRAM<FunctionNode>{
     loops.push(Pair.with((FunctionNode)$p.tree, new Stack<CommonNode>()));
+    loops.peek().getValue0().setName("__root__");
+    loops.peek().getValue0().setMemAddr(Pair.with(0, -1));
 } command+);
 
 commands: command commands?;
@@ -75,9 +77,11 @@ command: declaration | expression | statement;
 declaration: var_declaration | scope_declaration;
 
 var_declaration:
-    ^(VAR t=type id=IDENTIFIER<TypedNode> assignment?){
+    ^(VAR t=type id=IDENTIFIER<IdentifierNode> assignment?){
+        IdentifierNode var = (IdentifierNode)$id.tree;
+
         try {
-            symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
+            symtab.enter($id.text, new IdEntry(var));
         } catch (SymbolTableException e) {
             reporter.error($id.tree, String.format(
                 "but variable \%s was already declared \%s",
@@ -85,17 +89,39 @@ var_declaration:
             ));
         }
 
-        ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
+        // Copy expression type of `t`
+        var.setExprType(((TypedNode)$t.tree).getExprType());
+
+        // Register variable with function
+        FunctionNode func = loops.peek().getValue0();
+        func.getVars().add(var);
+        var.setMemAddr(Pair.with(symtab.currentLevel(), func.getVars().size() - 1));
+
+        log(String.format(
+            "Set relative memory address of \%s to (\%s, \%s)",
+            $id.text, var.getMemAddr().getValue0(), var.getMemAddr().getValue1()
+        ));
+
+        // Set scope to textual function scope
+        var.setScope(func);
+        log(String.format("Setting scope of \%s to \%s().", $id.text, func.getName()));
     };
 
 scope_declaration: func_declaration;
 
 func_declaration:
-    ^(f=FUNC<FunctionNode> id=IDENTIFIER<TypedNode> t=type{
-        loops.push(Pair.with((FunctionNode)$f.tree, new Stack<CommonNode>()));
+    ^(f=FUNC<FunctionNode> id=IDENTIFIER<IdentifierNode> t=type{
+        // Set name and parent of function
+        FunctionNode func = (FunctionNode)$f.tree;
+        func.setName($id.text);
+        func.setParent(loops.peek().getValue0());
+        log(String.format("Setting \%s.parent = \%s", $id.text, func.getParent().getName()));
+
+        // Register new scope of looping
+        loops.push(Pair.with(func, new Stack<CommonNode>()));
 
         try {
-            symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
+            symtab.enter($id.text, new IdEntry((IdentifierNode)$id.tree));
         } catch (SymbolTableException e) {
             reporter.error($id.tree, String.format(
                 "but variable \%s was already declared \%s",
@@ -104,26 +130,34 @@ func_declaration:
         }
 
         ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
-        ((FunctionNode)$f.tree).setExprType(((TypedNode)$t.tree).getExprType());
-        ((FunctionNode)$f.tree).setName($id.text);
+        func.setExprType(((TypedNode)$t.tree).getExprType());
         symtab.openScope();
+        func.setMemAddr(Pair.with(symtab.currentLevel(), -1));
+
+        // Disallow nesting deeper than 6 levels (limitation in TAM, as the pseudoregisters
+        // L1, L2... only exist up to L6).
+        //
+        // TODO: Implement our own pseudoregisters (resolving static links dynamically)
+        if (loops.size() > 6 + 2){ // +2 for root node, and current function declaration
+            reporter.error(func, "You can only nest functions 6 levels deep, it's morally wrong to nest deeper ;-).");
+        }
 
     } ^(ARGS arguments?) ^(BODY commands?)) {
         symtab.closeScope();
         loops.pop();
    };
 
-argument: t=type id=IDENTIFIER<TypedNode>{
+argument: t=type id=IDENTIFIER<IdentifierNode>{
     // Code duplication! :(
     try {
-        symtab.enter($id.text, new IdEntry((TypedNode)$id.tree));
+        symtab.enter($id.text, new IdEntry((IdentifierNode)$id.tree));
         ((TypedNode)$id.tree).setExprType(((TypedNode)$t.tree).getExprType());
     } catch (SymbolTableException e) {
         reporter.error($id.tree, e.getMessage());
     }
 
     FunctionNode function = loops.peek().getValue0();
-    function.getVars().add((TypedNode)$id.tree);
+    function.getArgs().add((TypedNode)$id.tree);
 
     log(String.format(
         "Register argument \%s of \%s to \%s().",
@@ -148,8 +182,7 @@ statement:
         loops.peek().getValue1().push($f.tree);
      } id=IDENTIFIER ex=expression commands?) {
         // Retrieve identifier from symtab.
-        CommonNode old_id_tree = id_tree;
-        id_tree = getID($id.text);
+        ((IdentifierNode)$id.tree).setRealNode(getID($id.text));
 
         // Check if argument is indeed an array
         TypedNode ext = (TypedNode)$ex.tree;
@@ -160,7 +193,7 @@ statement:
         // Compare innertype of array with identifier type
         Type inner = ext.getExprType().getInnerType();
         if(!((TypedNode)$id.tree).getExprType().equals(inner)){
-            reporter.error(old_id_tree,
+            reporter.error($id.tree,
                 "Variable must be of same type as elements of iterable:\n" +
                 String.format("   \%s: \%s\n", $id.text, ((TypedNode)$id.tree).getExprType()) +
                 String.format("   elements of iterable: \%s", inner)
@@ -221,9 +254,9 @@ statement:
     }|
     assignment;
 
-assignment: ^(a=ASSIGN id=IDENTIFIER<TypedNode> ex=expression){
+assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode> ex=expression){
     // Retrieve identifier from symtab.
-    id_tree = getID($id.text);
+    ((IdentifierNode)$id.tree).setRealNode(getID($id.text));
 
     // If `id` is AUTO, infer type from expression
     if(((TypedNode)$id.tree).getExprType().getPrimType().equals(Type.Primitive.AUTO)){
@@ -301,9 +334,8 @@ composite_type:
     };
 
 operand:
-    id=IDENTIFIER {
-        Type t = symtab.retrieve($id.text).getNode().getExprType();
-        ((TypedNode)$id.tree).setExprType(t);
+    id=IDENTIFIER<IdentifierNode> {
+        ((IdentifierNode)$id.tree).setRealNode(getID($id.text));
     } |
     n=NUMBER {
         ((TypedNode)$n.tree).setExprType(Type.Primitive.INTEGER);
@@ -314,4 +346,3 @@ operand:
     b=(TRUE|FALSE){
         ((TypedNode)$b.tree).setExprType(Type.Primitive.BOOLEAN);
     };
-

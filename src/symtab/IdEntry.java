@@ -1,6 +1,6 @@
 package symtab;
 
-import ast.TypedNode;
+import ast.IdentifierNode;
 
 /**
  * VB prac week1 - SymbolTable.
@@ -10,13 +10,13 @@ import ast.TypedNode;
  */
 public class IdEntry {
     private int  level = -1;
-    private TypedNode node;
+    private IdentifierNode node;
 
     public int   getLevel()             { return this.level;         }
     public void  setLevel(int level)    { this.level = level;   }
 
-    public TypedNode getNode() { return this.node; };
+    public IdentifierNode getNode() { return this.node; };
 
-    public IdEntry(TypedNode node){ this.node = node; }
+    public IdEntry(IdentifierNode node){ this.node = node; }
     public IdEntry(){}
 }

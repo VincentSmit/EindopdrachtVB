@@ -18,9 +18,10 @@ import org.antlr.stringtemplate.StringTemplate;
 
 import reporter.Reporter;
 import checker.GrammarChecker;
-import TAM.GrammarTAM;
+import generator.TAM.GrammarTAM;
 import ast.InvalidTypeException;
 import ast.CommonNodeAdaptor;
+import ast.FunctionNode;
 
 /**
 * Program that creates and starts the Grammar lexer, parser, etc.
@@ -89,14 +90,20 @@ public class Grammar {
                 GrammarChecker checker = new GrammarChecker(nodes);
                 checker.setTreeAdaptor(new CommonNodeAdaptor());
                 checker.setReporter(reporter);
-                checker.program();
+                tree = checker.program().getTree();
             }
 
             // Generate TAM code
             if (options.contains(Option.TAM)){
+                if (options.contains(Option.NO_CHECKER)){
+                    System.err.println("You can't use both -no_checker and -tam.");
+                    return;
+                }
+
                 CommonTreeNodeStream nodes = new CommonTreeNodeStream(new CommonNodeAdaptor(), tree);
                 GrammarTAM tam = new GrammarTAM(nodes);
                 tam.program();
+                return;
             }
 
             // Generate Python bytecode

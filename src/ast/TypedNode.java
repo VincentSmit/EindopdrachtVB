@@ -3,10 +3,13 @@ package ast;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.CommonToken;
 import org.antlr.runtime.RecognitionException;
+import org.javatuples.Pair;
+import org.javatuples.Tuple;
 
 @SuppressWarnings("unchecked")
 public class TypedNode extends CommonNode{
-    private Type exprType;
+    protected Type exprType;
+    protected Pair<Integer, Integer> memAddr;
 
     public TypedNode(){ super(); }
     public TypedNode(Token t){ super(t); }
@@ -14,6 +17,7 @@ public class TypedNode extends CommonNode{
     public TypedNode(TypedNode n) {
         super(n);
         this.exprType = n.getExprType();
+        this.memAddr = n.memAddr;
     }
 
 
@@ -65,5 +69,13 @@ public class TypedNode extends CommonNode{
 
     public void setExprType(TypedNode node){
         this.setExprType(node.getExprType());
+    }
+
+    public void setMemAddr(Pair<Integer, Integer> p){
+        this.memAddr = p;
+    }
+
+    public Pair getMemAddr(){
+        return this.memAddr;
     }
 }

@@ -11,17 +11,22 @@ import org.antlr.runtime.Token;
 @SuppressWarnings("unchecked")
 public class FunctionNode extends TypedNode{
     public List<TypedNode> vars;
+    public List<TypedNode> args;
+
     public TypedNode idNode;
     public String name;
+    public FunctionNode parent;
 
     public FunctionNode(CommonNode n){
         super(n);
         this.vars = new ArrayList<TypedNode>();
+        this.args = new ArrayList<TypedNode>();
     }
 
     public FunctionNode(Token t){
         super(t);
         this.vars = new ArrayList<TypedNode>();
+        this.args = new ArrayList<TypedNode>();
     }
 
     public FunctionNode(FunctionNode n){
@@ -29,8 +34,10 @@ public class FunctionNode extends TypedNode{
         this.vars = new ArrayList<TypedNode>();
 
         this.vars.addAll(n.vars);
+        this.args.addAll(n.args);
         this.idNode = n.idNode;
         this.name = n.name;
+        this.parent = n.parent;
     }
 
     public FunctionNode getDuplicate(){
@@ -42,7 +49,12 @@ public class FunctionNode extends TypedNode{
         this.name = name;
     }
 
-    public List<TypedNode> getVars(){
-        return this.vars;
+    public List<TypedNode> getVars(){ return this.vars; }
+    public List<TypedNode> getArgs(){ return this.args; }
+
+    public FunctionNode getParent(){ return this.parent; }
+    public void setParent(FunctionNode parent){
+        this.parent = parent;
     }
+
 }

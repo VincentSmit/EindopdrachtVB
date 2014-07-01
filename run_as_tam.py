@@ -23,6 +23,7 @@ def run_tam(filename):
 
     if stderr:
         print(stderr, file=sys.stderr)
+        print(stdout)
         return
 
     # Print AST
