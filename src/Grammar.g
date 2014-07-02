@@ -75,6 +75,7 @@ tokens {
 @header {
     import ast.TypedNode;
     import ast.IdentifierNode;
+    import ast.FunctionNode;
     import ast.ControlNode;
     import ast.CommonNode;
 }
@@ -108,8 +109,8 @@ scope_declaration:
 //    class_declaration;
 
 func_declaration: FUNC IDENTIFIER LPAREN arguments? RPAREN (RETURNS t=type)? LCURLY commands? RCURLY
-                      -> {t == null}? ^(FUNC IDENTIFIER IDENTIFIER<IdentifierNode>["auto"] ^(ARGS arguments?) ^(BODY commands?))
-                      -> ^(FUNC IDENTIFIER type ^(ARGS arguments?) ^(BODY commands?));
+                      -> {t == null}? ^(FUNC IDENTIFIER<FunctionNode> IDENTIFIER<IdentifierNode>["auto"] ^(ARGS arguments?) ^(BODY commands?))
+                      -> ^(FUNC IDENTIFIER<FunctionNode> type ^(ARGS arguments?) ^(BODY commands?));
 
 
 // Parses arguments of function declaration
@@ -161,7 +162,7 @@ expressionPM: expressionMD ((PLUS<TypedNode>^ | MINUS<TypedNode>^) expressionMD)
 expressionMD: expressionPW ((MULTIPL<TypedNode>^ | DIVIDES<TypedNode>^) expressionPW)*;
 expressionPW: operand (POWER<TypedNode>^ operand)*;
 
-expression_list: expression (COMMA! expression)?;
+expression_list: expression (COMMA! expression_list)?;
 call_expression: IDENTIFIER LPAREN expression_list? RPAREN
                      -> ^(CALL IDENTIFIER expression_list?);
 

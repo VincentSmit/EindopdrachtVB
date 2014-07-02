@@ -12,6 +12,31 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
 
+    def test_wrong_number_of_arguments(self):
+        stdout, stderr = self.compile("""
+        func x(int a, char b) returns char{
+            return 'c';
+        }
+        x(3);
+        """)
+        self.assertIn("Expected 2 arguments, 1 given.", stderr)
+
+    def test_wrong_return_type(self):
+        stdout, stderr = self.compile("""
+        func x() returns char{ return 'c'; }
+        int a = x();
+        """)
+        self.assertIn("Cannot assign value of Type<INTEGER> to variable of type Type<CHARACTER>.", stderr)
+
+    def test_wrong_arguments(self):
+        stdout, stderr = self.compile("""
+        func x(int a, char b) returns char{
+            return 'c';
+        }
+        x('q', 'x');
+        """)
+        self.assertIn("Argument 1 of x expected Type<INTEGER>, but got Type<CHARACTER>.", stderr)
+
     def test_nesting(self):
         nested_horror = ("""
         func a0() returns int{

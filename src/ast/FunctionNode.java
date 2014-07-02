@@ -9,13 +9,12 @@ import org.antlr.runtime.Token;
  * to the .
  */
 @SuppressWarnings("unchecked")
-public class FunctionNode extends TypedNode{
+public class FunctionNode extends IdentifierNode{
     public List<TypedNode> vars;
     public List<TypedNode> args;
 
-    public TypedNode idNode;
     public String name;
-    public FunctionNode parent;
+    public Type returnType;
 
     public FunctionNode(CommonNode n){
         super(n);
@@ -33,11 +32,10 @@ public class FunctionNode extends TypedNode{
         super(n);
         this.vars = new ArrayList<TypedNode>();
 
-        this.vars.addAll(n.vars);
-        this.args.addAll(n.args);
-        this.idNode = n.idNode;
+        this.vars = n.vars;
+        this.args = n.args;
         this.name = n.name;
-        this.parent = n.parent;
+        this.returnType = n.returnType;
     }
 
     public FunctionNode getDuplicate(){
@@ -49,12 +47,14 @@ public class FunctionNode extends TypedNode{
         this.name = name;
     }
 
-    public List<TypedNode> getVars(){ return this.vars; }
-    public List<TypedNode> getArgs(){ return this.args; }
-
-    public FunctionNode getParent(){ return this.parent; }
-    public void setParent(FunctionNode parent){
-        this.parent = parent;
+    public Type getReturnType(){
+        return ((FunctionNode)this.getRealNode()).returnType;
     }
 
+    public void setReturnType(Type type){
+        ((FunctionNode)this.getRealNode()).returnType = type;
+    }
+
+    public List<TypedNode> getVars(){ return this.vars; }
+    public List<TypedNode> getArgs(){ return this.args; }
 }

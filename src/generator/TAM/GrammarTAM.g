@@ -32,9 +32,9 @@ options {
         // Print label
         if(label != null){
             System.out.print(label);
-            for (int i=label.length(); i < 10; i++) System.out.print(' ');
+            for (int i=label.length(); i < 20; i++) System.out.print(' ');
         } else {
-            for (int i=0; i < 10; i++) System.out.print(' ');
+            for (int i=0; i < 20; i++) System.out.print(' ');
         }
 
         // Print command
@@ -70,28 +70,37 @@ options {
      * @ensures: this.label != null
      */
     public void emitLabel(String s, int ix){
-        this.label = s + ix + ":";
+        emitLabel(s, ((Integer)ix).toString());
+    }
+
+    public void emitLabel(String s1, String s2){
+        if (this.label != null){
+            // A label was already defined. Do a NOP and add an extra label on next line.
+            emit("PUSH 0", "NOP for secondary label");
+        }
+
+        this.label = String.format("\%s\%s:", s1, s2);
+    }
+
+    public void emitLabel(String s1, String s2, String s3){
+        emitLabel(s1 + s2, s3);
     }
 
     private void prepareFunction(FunctionNode f){
+        if(f.getMemAddr().getValue0() != 0){
+            // We're not the root note, so we need to make sure the TAM interpreter
+            // skips this function while executing the code.
+            emit(String.format("JUMP func\%safter[CB]", f.getName()));
+        }
+
+        emitLabel("func", f.getName());
         funcs.push(f);
-        emit(String.format("PUSH \%s", f.getVars().size()));
+
+        if (f.getVars().size() > 0)
+            emit(String.format("PUSH \%s", f.getVars().size()));
     }
 
-    private void var(String s){
-    }
-
-    /*
-     * Determines memory address of given identifier (which might be a pointer,
-     * in case of an array).
-     *
-     * @return: String formatted as {offset:int}[{base:string}]
-     */
-    private String addr(IdentifierNode id){
-        int lookupScopeLevel = (Integer)funcs.peek().getMemAddr().getValue0();
-        int idScopeLevel = (Integer)id.getMemAddr().getValue0();
-        int diff = lookupScopeLevel - idScopeLevel;
-
+    private String register(int diff, int lookupScopeLevel){
         String base = "LB"; // Local base
         if (diff == 6 || lookupScopeLevel == 0){
             // Declared as global, so we need to fetch it from stack base
@@ -102,8 +111,24 @@ options {
             base = "L" + diff;
         }
 
+        return base;
+    }
+
+    /*
+     * Determines memory address of given identifier (which might be a pointer,
+     * in case of an array).
+     *
+     * @return: String formatted as {offset:int}[{base:string}]
+     */
+    private String addr(IdentifierNode id){
+        int lookupScopeLevel = (Integer)funcs.peek().getMemAddr().getValue0();
+        int idScopeLevel = (Integer)id.getRealNode().getMemAddr().getValue0();
+        int diff = lookupScopeLevel - idScopeLevel;
+
+        String base = register(diff, lookupScopeLevel);
+
         // Return offset[base]
-        return String.format("\%s[\%s]", id.getMemAddr().getValue1(), base);
+        return String.format("\%s[\%s]", id.getRealNode().getMemAddr().getValue1(), base);
     }
 }
 
@@ -114,12 +139,22 @@ program: ^(p=PROGRAM<FunctionNode> {
 };
     
 import_statement: ^(IMPORT from=IDENTIFIER imprt=IDENTIFIER);
-command: declaration | statement;
+command: declaration | statement | expression{
+    emit("POP(0) 1", "Pop (unused) result of expression");
+};
+commands: command commands?;
 
-declaration: var_declaration;
+declaration: var_declaration | func_declaration;
+
 statement:
     assignment |
-    while_statement;
+    while_statement |
+    return_statement;
+
+return_statement:
+    ^(r=RETURN<ControlNode> ex=expression){
+
+    };
 
 while_statement
 @init{ int ix = input.index(); emitLabel("DO", ix); }:
@@ -134,8 +169,20 @@ while_statement
 // Already handled in function/program declaration
 var_declaration: ^(VAR type id=IDENTIFIER);
 
+arguments: argument arguments?;
+argument: t=type id=IDENTIFIER<IdentifierNode>;
+
+func_declaration: ^(FUNC id=IDENTIFIER {
+    FunctionNode func = (FunctionNode)id;
+    prepareFunction(func);
+} type ^(ARGS arguments?) ^(BODY commands?)){
+    emit("RETURN (1) " + func.getArgs().size(), "Return and pop arguments");
+    emitLabel("func", func.getName(), "after");
+    funcs.pop();
+};
+
 assignment: ^(ASSIGN id=IDENTIFIER expression){
-    emit("STORE(1) " + addr((IdentifierNode)id));
+    emit("STORE(1) " + addr((IdentifierNode)id), $id.text);
 };
 
 
@@ -155,11 +202,22 @@ expression:
     | ^(DIVIDES x=expression y=expression){ emit("CALL div"); }
     | ^(MULTIPL x=expression y=expression){ emit("CALL mult"); }
     | ^(POWER x=expression y=expression)  { emit("CALL fockdeze"); }
+    | ^(c=CALL<TypedNode> id=IDENTIFIER<IdentifierNode> expression_list?){
+        IdentifierNode inode = (IdentifierNode)id;
+        FunctionNode func = (FunctionNode)inode.getRealNode();
+        int funcLevel = (Integer)func.getMemAddr().getValue0() - 1;
+        int currentLevel = funcs.size() - 1;
+
+        String base = register(currentLevel - funcLevel, currentLevel);
+        emit(String.format("CALL (\%s) \%s[CB]", base, "func" + func.getName()));
+    }
     | operand;
+
+expression_list: expression expression_list?;
 
 operand: 
     id=IDENTIFIER{
-       emit("LOAD(1) " + addr((IdentifierNode)id));
+       emit("LOAD(1) " + addr((IdentifierNode)id), $id.text);
     } |
     n=NUMBER{
         emit("LOADL " + $n.text);

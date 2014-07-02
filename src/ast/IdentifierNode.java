@@ -58,8 +58,13 @@ public class IdentifierNode extends TypedNode{
         return new IdentifierNode(this);
     }
 
-    public FunctionNode getScope(){ return this.scope; }
-    public void setScope(FunctionNode scope){ this.scope = scope; }
+    public FunctionNode getScope(){
+        return this.getRealNode().scope;
+    }
+
+    public void setScope(FunctionNode scope){
+        this.getRealNode().scope = scope;
+    }
 
     /*
      * Traverses tree of n.getRealNode() calls until it finds a call which returns

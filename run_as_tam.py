@@ -41,13 +41,13 @@ def run_tam(filename):
             print("Compiling to TASM..")
             subprocess.call(("java", "TAM.Assembler", tam.name, tasm.name))
 
-            print("Executing TAM..")
+            print("Executing TASM..")
             subprocess.call(("java", "TAM.Interpreter", tasm.name))
 
 if __name__ == '__main__':
     from tests.test import set_cwd, GRAMMAR_DIR
 
-    filename = os.path.abspath(sys.argv[1])
+    filename = os.path.abspath(sys.argv[-1])
     with set_cwd(GRAMMAR_DIR):
         run_tam(filename)
 
