@@ -8,15 +8,46 @@
 \usepackage{graphicx}
 \usepackage[font={small,it}]{caption}
 \usepackage[bookmarks]{hyperref}
+\usepackage{listings}
+\usepackage{color}
 
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\lstset{ %
+  backgroundcolor=\color{white},   
+  basicstyle=\footnotesize,        
+  breakatwhitespace=false,         
+  breaklines=true,                 
+  captionpos=b,                    
+  commentstyle=\color{mygreen},    
+  frame=single,                    
+  keepspaces=true,                
+  keywordstyle=\color{blue},       
+  language=java,                 
+  morekeywords={func, returns},            
+  numbers=left,                   
+  numbersep=5pt,                   
+  numberstyle=\tiny\color{mygray},
+  rulecolor=\color{black},         
+  showspaces=false,                
+  showstringspaces=false,          
+  showtabs=false,                  
+  stringstyle=\color{mymauve},     
+  tabsize=2,                       
+  title=\lstname                   
+}
+
+% commando's die tabs definieren. 
 \newcommand{\itab}[1]{\hspace{0em}\rlap{#1}}
 \newcommand{\tab}[1]{\hspace{.4\textwidth}\rlap{#1}}
 \newcommand{\stab}[1]{\hspace{.2\textwidth}\rlap{#1}}
 
 \bibliographystyle{ieeetr}
 
-
-\author{H.M. Bastiaan \\ s1204254 \\ Doctor van Damstraat xx \\\\ V.J. Smit \\ s1206257 \\ Kremersmaten 168}
+% Wij, HEUH
+\author{H.M. Bastiaan \\ s1204254 \\ Doctor van Damstraat 198 \\\\ V.J. Smit \\ s1206257 \\ Kremersmaten 168}
 \title{KIDEB \\ Onze eigen programmeertaal}
 \begin{document}
 \maketitle
@@ -24,7 +55,7 @@
 
 \tableofcontents
 \clearpage
-
+% pfietwiew, sectie hoor
 \input{sections/inleiding}
 \input{sections/taalbeschrijving}
 \input{sections/problemen_oplossingen}
@@ -37,6 +68,5 @@
 
 \clearpage
 \bibliography{sources}
-
 
 \end{document}

@@ -1,8 +1,11 @@
-\chapter{Syntax, context \& semantiek}
-    \label{chap:syntax_context_en_semantiek}
-\section{Syntax}
+\chapter{Syntax, context en semantiek} % (fold)
+\label{cha:syntax_context_en_semantiek}
+Dit hoofdstuk bespreekt de specificatie van de taal aan de hand van de syntax, de context regels en de semantiek.
+\section{Syntax} % (fold)
+\label{sec:syntax}
 Deze sectie beschrijft de symbolen en productieregels van KIDEB. Samen vormen deze de totale grammatica van de taal.
-\subsection{Terminale symbolen}
+\subsection{Terminale symbolen} % (fold)
+\label{sub:terminale_symbolen}
 De terminale symbolen:
 \begin{description}
     \item \itab{:}\stab{;}\stab{(}\stab{)}\stab{[}
@@ -16,9 +19,12 @@ De terminale symbolen:
     \item \itab{args}\stab{var}\stab{of}\stab{int}\stab{bool}
     \item \itab{char}\stab{call}
 \end{description}
+% subsection terminale_symbolen (end)
+
 \clearpage
 
-\subsection{Non-terminale symbolen}
+\subsection{Non-terminale symbolen} % (fold)
+\label{sub:non_terminale_symbolen}
 De non-terminale symbolen:
 \begin{description}
     \item[program (startsymbool)] 
@@ -56,8 +62,10 @@ De non-terminale symbolen:
     \item[identifier]
     \item[number]
 \end{description}
+% subsection non_terminale_symbolen (end)
 
-\subsection{Productieregels}
+\subsection{Productieregels} % (fold)
+\label{sub:productieregels}
 \begin{description}
     \item[program] := \hfill \\
         command;
@@ -151,17 +159,79 @@ De non-terminale symbolen:
     \item[NUMBER] := \hfill \\
         DIGIT+;
     \item[STRING\_VALUE] := \hfill \\
-        
+        \textquoteleft ( \textbackslash\textbackslash \textquoteleft? \textbar \textasciitilde(\textbackslash\textbackslash \textbar \textquoteleft) )\textasteriskcentered \textquoteleft;
     \item[COMMENT] := \hfill \\
+        // .\textasteriskcentered \textbackslash n;
     \item[WS] := \hfill \\
+        \textvisiblespace \textbar \textbackslash t \textbar \textbackslash f \textbar \textbackslash r \textbar \textbackslash n
     \item[DIGIT] := \hfill \\
+        0..9;
     \item[LETTER] := \hfill \\
+        LOWER \textbar UPPER;
     \item[LOWER] := \hfill \\
+        a..z;
     \item[UPPER] := \hfill \\
+        A..Z;
 \end{description}
+% subsection productieregels (end)
+% section syntax (end)
 
-\section{Context}
+\section{Context} % (fold)
+\label{sec:context}
+De context van de taal wordt opgedeeld in twee delen, namelijke scope regels en type regels. De eerste bespreekt declaratie en het gebruik van variabelen. De tweede bespreekt de typering van de taal.
+% section context (end)
 
-\section{Semantiek}
+\subsection{Scope regels} % (fold)
+\label{sub:scope_regels}
+Om de scoperegels uit te leggen, gebruiken we de volgende voorbeeld code.
+\begin{lstlisting}
+int x;
+x = 5;
 
+func som(int x) returns int {
+    int y = 7;
+    return x + y;
+}
+
+print(som(x));
+\end{lstlisting}
+Op regel 1 wordt variabele \emph{x} gedeclareerd, dit is de \emph{binding occurence} voor \emph{x}. De eerste \emph{applied occurence} komt meteen op regel 2, waar \emph{x} de waarde 5 kijgt.
+
+De functie \emph{som} wordt op regel 4 gedefinieerd en telt de waarde van variabele \emph{y} hierbij op. De variabele \emph{y} wordt gedefinieerd binnen de functie en is dus ook alleen binnen de functie te gebruiken.
+% subsection scoperegels (end)
+
+\subsection{Type regels} % (fold)
+\label{sub:type_regels}
+Voor de rekenkundige operatoren gelden de volgende type regels.
+\\ \\
+\begin{tabular}{c c c c}
+    \textbf{prioriteit} & \textbf{operatoren} & \textbf{operand types} & \textbf{resultaat type} \\
+    \hline
+    1 & \textasciicircum & int & int \\
+    2 & \textasteriskcentered,/ & int & int \\
+    3 & +,- & int & int \\
+    4 & \textless, \textless=, \textgreater=, \textgreater & int & bool \\
+      & ==, != & int, char, bool & bool \\
+    5 & \&\& & bool & bool \\
+    6 & \textbar \textbar & bool & bool \\
+\end{tabular}
+\\ \\
+Voor de statements gelden de volgende regels.\\
+
+\texttt{if Expression then Command else Command} \\ Expression must be of type \emph{boolean}. 
+
+\texttt{while Expression do Command} \\ Expression must be of type \emph{boolean}.
+
+\texttt{for Identifier in Expression Command} \\ Identifier must be of type integer. Expression must be of type array. 
+
+\texttt{Identifier = Expression} \\ Identifier and Expression must be of the same type.
+
+% subsection type_regels (end)
+
+\section{Semantiek} % (fold)
+\label{sec:semantiek}
+
+% section semantiek (end)
+
+% chapter syntax_context_en_semantiek (end)
 \clearpage
