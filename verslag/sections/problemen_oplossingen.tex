@@ -1,4 +1,23 @@
 \chapter{Problemen \& oplossingen}
     \label{chap:problemen_oplossingen}
+In dit hoofdstuk worden enkele belangrijke problemen besproken die bij de ontwikkeling van de taal naar voren kwamen. Allereerst komt scoping aan bod. Daarna wordt kort de AST besproken, gevolgd door type inferentie. 
 
+floating points, arrays, functies?
+\section{Scoping}
+    \label{sec:scoping}
+Een belangrijk probleem bij het programmeren in het defini\"eren en gebruik van variabelen in verschillende scopes. Variabelen die bijvoorbeeld binnen een lus worden gedefinieerd, mogen daarbuiten niet gebruikt worden. Ook moet de variabele worden gebruikt die gedeclareerd is onder of in die scope.
+
+Voor het defini\"eren van scopes is de volgende oplossing gekozen. Een scope binnen KIDEB bestaat tussen twee accolades. De scope wordt geopend door een \'\{\' en gesloten door een \'\}\'.
+
+Om bij te houden waar een variabele gedeclareerd is en gebruikt wordt, wordt een symbol table bijgehouden. 
+
+\section{Opbouwen AST}
+    \label{sec:opbouw_AST}
+Voor het opbouwen van onze AST voldeed de standaar node niet. Hiertoe is een eigen node-hi\"erarchie gemaakt. De specificatie van deze nodes is te vinden in \ref{chap:java_programmatuur}.
+
+\section{Type inferentie}
+    \label{sec:type_inferentie}
+Type inferentie is een krachtige toevoeging voor een taal, maar brengt ook problemen met zich mee. Op compiletijd moet bepaald worden wat het type is, zonder het expliciet te vermelden.
+
+HIER MOET MEER BIJ!!
 \clearpage
