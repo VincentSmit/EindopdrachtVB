@@ -18,90 +18,20 @@ options {
     // Keep track of the 'current' function
     private Stack<FunctionNode> funcs = new Stack<>();
 
-    // Used to determine at which position on the stack a variable is kept.
-    private String label;
-    private String comment;
-
-    /*
-     * Prints code `s` formatted nicely.
-     *
-     * @requires: s != null
-     * @ensures: this.label == null && this.comment == null;
-     */
-    public void emit(String s){
-        // Print label
-        if(label != null){
-            System.out.print(label);
-            for (int i=label.length(); i < 25; i++) System.out.print(' ');
-        } else {
-            for (int i=0; i < 25; i++) System.out.print(' ');
-        }
-
-        // Print command
-        System.out.print(s);
-
-        // Print comment
-        if (comment != null){
-            for (int i=s.length(); i < 30; i++) System.out.print(' ');
-            System.out.print("; ");
-            System.out.print(comment);
-        }
-
-        this.comment = null;
-        this.label = null;
-        System.out.println("");
-    }
-
-    /*
-     * Prints code `s` formatted nicely according to emit(String).
-     *
-     * @requires: s != null
-     * @ensures: this.label == null && this.comment == null;
-     */
-    public void emit(String s, String comment){
-        this.comment = comment;
-        emit(s);
-    }
-
-    /*
-     * Set label property for following emit() call.
-     *
-     * @requires: s != null
-     * @ensures: this.label != null
-     */
-    public void emitLabel(String s, int ix){
-        emitLabel(s, ((Integer)ix).toString());
-    }
-
-    public void emitLabel(String s){
-        if (this.label != null){
-            // A label was already defined. Do a NOP and add an extra label on next line.
-            emit("PUSH 0", "NOP for secondary label");
-        }
-
-        this.label = s + ":";
-    }
-
-    public void emitLabel(String s1, String s2){
-        emitLabel(String.format("\%s\%s", s1, s2));
-    }
-
-    public void emitLabel(String s1, String s2, String s3){
-        emitLabel(String.format("\%s\%s\%s", s1, s2, s3));
-    }
+    private Emitter emitter = new Emitter();
 
     private void prepareFunction(FunctionNode f){
         if(f.getMemAddr().getValue0() != 0){
             // We're not the root note, so we need to make sure the TAM interpreter
             // skips this function while executing the code.
-            emit(String.format("JUMP \%safter[CB]", f.getFullName()));
+            emitter.emit(String.format("JUMP \%safter[CB]", f.getFullName()));
         }
 
-        emitLabel(f.getFullName());
+        emitter.emitLabel(f.getFullName());
         funcs.push(f);
 
         if (f.getVars().size() > 0)
-            emit(String.format("PUSH \%s", f.getVars().size()));
+            emitter.emit(String.format("PUSH \%s", f.getVars().size()));
     }
 
     private String register(int diff, int lookupScopeLevel){
@@ -139,12 +69,12 @@ options {
 program: ^(p=PROGRAM<FunctionNode> {
     prepareFunction((FunctionNode)p);
 } import_statement* command+){
-    emit("HALT");
+    emitter.emit("HALT");
 };
     
 import_statement: ^(IMPORT from=IDENTIFIER imprt=IDENTIFIER);
 command: declaration | statement | expression{
-    emit("POP(0) 1", "Pop (unused) result of expression");
+    emitter.emit("POP(0) 1", "Pop (unused) result of expression");
 };
 commands: command commands?;
 
@@ -160,33 +90,33 @@ statement:
 if_statement
 @init{ int ix = input.index(); }:
 ^(IF {
-    emitLabel("IF", ix);
+    emitter.emitLabel("IF", ix);
 } expression {
-    emit("JUMPIF (0) ELSE" + ix + "[CB]");
+    emitter.emit("JUMPIF (0) ELSE" + ix + "[CB]");
 } ^(THEN commands?) {
-    emit("JUMP ENDIF" + ix + "[CB]");
-    emitLabel("ELSE", ix);
+    emitter.emit("JUMP ENDIF" + ix + "[CB]");
+    emitter.emitLabel("ELSE", ix);
 } (^(ELSE commands?))?){
-    emitLabel("ENDIF", ix);
+    emitter.emitLabel("ENDIF", ix);
 };
 
 print_statement: ^(PRINT expr=expression){
-    emit("CALL putint");
-    emit("LOADL 10", "Print newline");
-    emit("CALL put");
+    emitter.emit("CALL putint");
+    emitter.emit("LOADL 10", "Print newline");
+    emitter.emit("CALL put");
 };
 
 return_statement: ^(RETURN<ControlNode> expression){
-    emit("RETURN (1) " + funcs.peek().getArgs().size(), "Return and pop arguments");
+    emitter.emit("RETURN (1) " + funcs.peek().getArgs().size(), "Return and pop arguments");
 };
 
 while_statement
-@init{ int ix = input.index(); emitLabel("DO", ix); }:
+@init{ int ix = input.index(); emitter.emitLabel("DO", ix); }:
     ^(WHILE expression {
-        emit("JUMPIF(0) AFTER" + ix + "[CB]");
+        emitter.emit("JUMPIF(0) AFTER" + ix + "[CB]");
     } command*){
-        emit("JUMP DO" + ix + "[CB]");
-        emitLabel("AFTER", ix);
+        emitter.emit("JUMP DO" + ix + "[CB]");
+        emitter.emitLabel("AFTER", ix);
     };
 
 
@@ -200,12 +130,12 @@ func_declaration: ^(FUNC id=IDENTIFIER {
     FunctionNode func = (FunctionNode)id;
     prepareFunction(func);
 } type ^(ARGS arguments?) ^(BODY commands?)){
-    emitLabel(func.getFullName(), "after");
+    emitter.emitLabel(func.getFullName(), "after");
     funcs.pop();
 };
 
 assignment: ^(ASSIGN id=IDENTIFIER expression){
-    emit("STORE(1) " + addr((IdentifierNode)id), $id.text);
+    emitter.emit("STORE(1) " + addr((IdentifierNode)id), $id.text);
 };
 
 
@@ -214,17 +144,17 @@ primitive_type: INTEGER | BOOLEAN | CHARACTER;
 composite_type: ARRAY primitive_type expression;
 
 expression:
-      ^(PLUS x=expression y=expression)   { emit("CALL add"); }
-    | ^(MINUS x=expression y=expression)  { emit("CALL sub"); }
-    | ^(LT x=expression y=expression)     { emit("CALL lt"); }
-    | ^(GT x=expression y=expression)     { emit("CALL gt"); }
-    | ^(LTE x=expression y=expression)    { emit("CALL le"); }
-    | ^(GTE x=expression y=expression)    { emit("CALL ge"); }
-    | ^(EQ x=expression y=expression)     { emit("LOADL 1"); emit("CALL eq"); }
-    | ^(NEQ x=expression y=expression)    { emit("LOADL 1"); emit("CALL ne"); }
-    | ^(DIVIDES x=expression y=expression){ emit("CALL div"); }
-    | ^(MULTIPL x=expression y=expression){ emit("CALL mult"); }
-    | ^(POWER x=expression y=expression)  { emit("CALL fockdeze"); }
+      ^(PLUS x=expression y=expression)   { emitter.emit("CALL add"); }
+    | ^(MINUS x=expression y=expression)  { emitter.emit("CALL sub"); }
+    | ^(LT x=expression y=expression)     { emitter.emit("CALL lt"); }
+    | ^(GT x=expression y=expression)     { emitter.emit("CALL gt"); }
+    | ^(LTE x=expression y=expression)    { emitter.emit("CALL le"); }
+    | ^(GTE x=expression y=expression)    { emitter.emit("CALL ge"); }
+    | ^(EQ x=expression y=expression)     { emitter.emit("LOADL 1"); emitter.emit("CALL eq"); }
+    | ^(NEQ x=expression y=expression)    { emitter.emit("LOADL 1"); emitter.emit("CALL ne"); }
+    | ^(DIVIDES x=expression y=expression){ emitter.emit("CALL div"); }
+    | ^(MULTIPL x=expression y=expression){ emitter.emit("CALL mult"); }
+    | ^(POWER x=expression y=expression)  { emitter.emit("CALL fockdeze"); }
     | ^(c=CALL<TypedNode> id=IDENTIFIER<IdentifierNode> expression_list?){
         IdentifierNode inode = (IdentifierNode)id;
         FunctionNode func = (FunctionNode)inode.getRealNode();
@@ -232,7 +162,7 @@ expression:
         int currentLevel = funcs.size() - 1;
 
         String base = register(currentLevel - funcLevel, currentLevel);
-        emit(String.format("CALL (\%s) \%s[CB]", base, func.getFullName()));
+        emitter.emit(String.format("CALL (\%s) \%s[CB]", base, func.getFullName()));
     }
     | operand;
 
@@ -240,12 +170,12 @@ expression_list: expression expression_list?;
 
 operand: 
     id=IDENTIFIER{
-       emit("LOAD(1) " + addr((IdentifierNode)id), $id.text);
+       emitter.emit("LOAD(1) " + addr((IdentifierNode)id), $id.text);
     } |
     n=NUMBER{
-        emit("LOADL " + $n.text);
+        emitter.emit("LOADL " + $n.text);
     } |
     s=STRING_VALUE{
-        emit("LOADL " + (int)($s.text).charAt(1));
+        emitter.emit("LOADL " + (int)($s.text).charAt(1));
     };
 
