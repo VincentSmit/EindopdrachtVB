@@ -16,6 +16,7 @@ De terminale symbolen:
     \item \itab{args}\stab{var}\stab{of}\stab{int}\stab{bool}
     \item \itab{char}\stab{call}
 \end{description}
+\clearpage
 
 \subsection{Non-terminale symbolen}
 De non-terminale symbolen:
@@ -57,6 +58,107 @@ De non-terminale symbolen:
 \end{description}
 
 \subsection{Productieregels}
+\begin{description}
+    \item[program] := \hfill \\
+        command;
+    \item[command] := \hfill \\
+        assign\_statement SEMICOLON \textbar \\
+        declaration \textbar \\
+        statement \textbar \\
+        expression \textbar \\
+        SEMICOLON;
+    \item[commands] := \hfill \\
+        command commands?;
+    \item[declaration] := \hfill \\
+        var\_declaration \textbar \\
+        scope\_declaration;
+    \item[var\_declaration] := \hfill \\
+        type IDENTIFIER (var\_assignment) SEMICOLON;
+    \item[scope\_declaration] := \hfill \\
+        func\_declaration;
+    \item[func\_declaration] := \hfill \\
+        FUNC IDENTIFIER LPAREN arguments? RPAREN (RETURNS type)? \{commands?\};
+    \item[assignment] := \hfill \\
+        ASSIGN expression;
+    \item[var\_assignment] := \hfill \\
+        ASSIGN expression;
+    \item[argument] := \hfill \\
+        type IDENTIFIER;
+    \item[arguments] := \hfill \\
+        argument (COMMA arguments)?;
+    \item[statement] := \hfill \\
+        if\_statement \textbar \\ 
+        while\_statement \textbar \\
+        for\_statement \textbar \\
+        return\_statement \textbar \\
+        BREAK SEMICOLON \textbar \\
+        CONTINUE SEMICOLON;
+    \item[if\_statement] := \hfill \\
+        if\_part else\_part?;
+    \item[if\_part] := \hfill \\
+        IF LPAREN expression RPAREN LCURLY command* RCURLY;
+    \item[else\_part] := \hfill \\
+        ELSE LCURLY command* RCURLY;
+    \item[while\_statement] := \hfill \\
+        WHILE LPAREN expression RPAREN LCURLY commands? RCURLY;
+    \item[for\_statement] := \hfill \\
+        FOR LPAREN expression RPAREN LCURLY commands? RCURLY;
+    \item[return\_statement] := \hfill \\
+        RETURN expression SEMICOLON;
+    \item[expression] := \hfill \\
+        call\_expression \textbar \\
+        expressionAO \textbar \\
+        array\_literal;
+    \item[expressionAO] := \hfill \\
+        expressionLO (AND expressionLO \textbar OR expressionLO)*;
+    \item[expressionLO] := \hfill \\
+        expressionPM ((LT \textbar GT \textbar LTE \textbar GTE \textbar EQ \textbar NEQ) expressionPM)*;
+    \item[expressionPM] := \hfill \\
+        expressionMD ((PLUS \textbar MINUS) expressionMD)*;
+    \item[expressionMD] := \hfill \\
+        expressionPW ((MULTIPLE \textbar DIVIDE) expressionPW);
+    \item[expressionPW] := \hfill \\
+        operand (POWER operand)*;
+    \item[expression\_list] := \hfill \\
+        expression (COMMA expression\_list)?;
+    \item[call\_expression] := \hfill \\
+        IDENTIFIER LPAREN expression\_list? RPAREN;
+    \item[operand \\] := \hfill \\
+        LPAREN expression RPAREN \textbar \\
+        IDENTIFIER \textbar \\
+        NUMBER \textbar \\
+        STRING\_VALUE \textbar \\
+        bool;
+    \item[bool] := \hfill \\
+        TRUE  \textbar \\
+        FALSE;
+    \item[array\_literal] := \hfill \\
+        LBLOCK array\_value\_list RBLOCK;
+    \item[array\_value\_list] := \hfill \\
+        expression (COMMA array\_value\_list)?;
+    \item[type] \hfill \\
+        primitive\_type \\
+        compositie\_type
+    \item[primitive\_type] := \hfill \\
+        INTEGER \textbar \\
+        BOOLEAN \textbar \\
+        CHARACTER \textbar \\
+        AUTO;
+    \item[composite\_type] := \hfill \\
+        primitive\_type LBLOCK expression RBLOCK
+    \item[IDENTIFIER] := \hfill \\
+        LETTER (LETTER \textbar DIGIT);
+    \item[NUMBER] := \hfill \\
+        DIGIT+;
+    \item[STRING\_VALUE] := \hfill \\
+        
+    \item[COMMENT] := \hfill \\
+    \item[WS] := \hfill \\
+    \item[DIGIT] := \hfill \\
+    \item[LETTER] := \hfill \\
+    \item[LOWER] := \hfill \\
+    \item[UPPER] := \hfill \\
+\end{description}
 
 \section{Context}
 
