@@ -111,6 +111,10 @@ class GrammarTest(AntlrTest):
         stdout, stderr = self.compile("auto a = 3 + 4 / 5 ^ 2 <= 6 ^ (3+4) / 5;")
         self.assertEqual(stdout, "(PROGRAM (VAR auto a) (ASSIGN a (<= (+ 3 (/ 4 (^ 5 2))) (/ (^ 6 (+ 3 4)) 5))))")
 
+    def test_call_operator_precedence(self):
+        stdout, stderr = self.compile("""a() + b();""")
+        self.assertEqual(stdout, "(PROGRAM (+ (CALL a) (CALL b)))")
+
     # INVALID PROGRAMS
 
 

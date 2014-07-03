@@ -32,9 +32,9 @@ options {
         // Print label
         if(label != null){
             System.out.print(label);
-            for (int i=label.length(); i < 20; i++) System.out.print(' ');
+            for (int i=label.length(); i < 25; i++) System.out.print(' ');
         } else {
-            for (int i=0; i < 20; i++) System.out.print(' ');
+            for (int i=0; i < 25; i++) System.out.print(' ');
         }
 
         // Print command
@@ -73,27 +73,31 @@ options {
         emitLabel(s, ((Integer)ix).toString());
     }
 
-    public void emitLabel(String s1, String s2){
+    public void emitLabel(String s){
         if (this.label != null){
             // A label was already defined. Do a NOP and add an extra label on next line.
             emit("PUSH 0", "NOP for secondary label");
         }
 
-        this.label = String.format("\%s\%s:", s1, s2);
+        this.label = s + ":";
+    }
+
+    public void emitLabel(String s1, String s2){
+        emitLabel(String.format("\%s\%s", s1, s2));
     }
 
     public void emitLabel(String s1, String s2, String s3){
-        emitLabel(s1 + s2, s3);
+        emitLabel(String.format("\%s\%s\%s", s1, s2, s3));
     }
 
     private void prepareFunction(FunctionNode f){
         if(f.getMemAddr().getValue0() != 0){
             // We're not the root note, so we need to make sure the TAM interpreter
             // skips this function while executing the code.
-            emit(String.format("JUMP func\%safter[CB]", f.getName()));
+            emit(String.format("JUMP \%safter[CB]", f.getFullName()));
         }
 
-        emitLabel("func", f.getName());
+        emitLabel(f.getFullName());
         funcs.push(f);
 
         if (f.getVars().size() > 0)
@@ -149,12 +153,32 @@ declaration: var_declaration | func_declaration;
 statement:
     assignment |
     while_statement |
-    return_statement;
+    return_statement |
+    if_statement |
+    print_statement;
 
-return_statement:
-    ^(r=RETURN<ControlNode> ex=expression){
+if_statement
+@init{ int ix = input.index(); }:
+^(IF {
+    emitLabel("IF", ix);
+} expression {
+    emit("JUMPIF (0) ELSE" + ix + "[CB]");
+} ^(THEN commands?) {
+    emit("JUMP ENDIF" + ix + "[CB]");
+    emitLabel("ELSE", ix);
+} (^(ELSE commands?))?){
+    emitLabel("ENDIF", ix);
+};
 
-    };
+print_statement: ^(PRINT expr=expression){
+    emit("CALL putint");
+    emit("LOADL 10", "Print newline");
+    emit("CALL put");
+};
+
+return_statement: ^(RETURN<ControlNode> expression){
+    emit("RETURN (1) " + funcs.peek().getArgs().size(), "Return and pop arguments");
+};
 
 while_statement
 @init{ int ix = input.index(); emitLabel("DO", ix); }:
@@ -176,8 +200,7 @@ func_declaration: ^(FUNC id=IDENTIFIER {
     FunctionNode func = (FunctionNode)id;
     prepareFunction(func);
 } type ^(ARGS arguments?) ^(BODY commands?)){
-    emit("RETURN (1) " + func.getArgs().size(), "Return and pop arguments");
-    emitLabel("func", func.getName(), "after");
+    emitLabel(func.getFullName(), "after");
     funcs.pop();
 };
 
@@ -197,8 +220,8 @@ expression:
     | ^(GT x=expression y=expression)     { emit("CALL gt"); }
     | ^(LTE x=expression y=expression)    { emit("CALL le"); }
     | ^(GTE x=expression y=expression)    { emit("CALL ge"); }
-    | ^(EQ x=expression y=expression)     { emit("LOADL 1\nCALL eq"); }
-    | ^(NEQ x=expression y=expression)    { emit("LOADL 1\nCALL ne"); }
+    | ^(EQ x=expression y=expression)     { emit("LOADL 1"); emit("CALL eq"); }
+    | ^(NEQ x=expression y=expression)    { emit("LOADL 1"); emit("CALL ne"); }
     | ^(DIVIDES x=expression y=expression){ emit("CALL div"); }
     | ^(MULTIPL x=expression y=expression){ emit("CALL mult"); }
     | ^(POWER x=expression y=expression)  { emit("CALL fockdeze"); }
@@ -209,7 +232,7 @@ expression:
         int currentLevel = funcs.size() - 1;
 
         String base = register(currentLevel - funcLevel, currentLevel);
-        emit(String.format("CALL (\%s) \%s[CB]", base, "func" + func.getName()));
+        emit(String.format("CALL (\%s) \%s[CB]", base, func.getFullName()));
     }
     | operand;
 
@@ -222,5 +245,7 @@ operand:
     n=NUMBER{
         emit("LOADL " + $n.text);
     } |
-    STRING_VALUE;
+    s=STRING_VALUE{
+        emit("LOADL " + (int)($s.text).charAt(1));
+    };
 

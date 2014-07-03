@@ -5,32 +5,32 @@ import java.util.ArrayList;
 import org.antlr.runtime.Token;
 
 /*
- * A function node contains a list of argument it takes as TypedNodes pointing
+ * A function node contains a list of argument it takes as IdentifierNodes pointing
  * to the .
  */
 @SuppressWarnings("unchecked")
 public class FunctionNode extends IdentifierNode{
-    public List<TypedNode> vars;
-    public List<TypedNode> args;
+    public List<IdentifierNode> vars;
+    public List<IdentifierNode> args;
 
     public String name;
     public Type returnType;
 
     public FunctionNode(CommonNode n){
         super(n);
-        this.vars = new ArrayList<TypedNode>();
-        this.args = new ArrayList<TypedNode>();
+        this.vars = new ArrayList<IdentifierNode>();
+        this.args = new ArrayList<IdentifierNode>();
     }
 
     public FunctionNode(Token t){
         super(t);
-        this.vars = new ArrayList<TypedNode>();
-        this.args = new ArrayList<TypedNode>();
+        this.vars = new ArrayList<IdentifierNode>();
+        this.args = new ArrayList<IdentifierNode>();
     }
 
     public FunctionNode(FunctionNode n){
         super(n);
-        this.vars = new ArrayList<TypedNode>();
+        this.vars = new ArrayList<IdentifierNode>();
 
         this.vars = n.vars;
         this.args = n.args;
@@ -55,6 +55,24 @@ public class FunctionNode extends IdentifierNode{
         ((FunctionNode)this.getRealNode()).returnType = type;
     }
 
-    public List<TypedNode> getVars(){ return this.vars; }
-    public List<TypedNode> getArgs(){ return this.args; }
+    public List<IdentifierNode> getVars(){ return this.vars; }
+    public List<IdentifierNode> getArgs(){ return this.args; }
+
+    /*
+     * Returns unique name including their parents, which can be used as a unique
+     * name for this function inside a program.
+     */
+    public String getFullName(){
+        if (this.getName().equals("__root__"))
+            return this.getName();
+
+        String fullName = this.getName();
+        FunctionNode f = this.getScope();
+        while (!f.getName().equals("__root__")){
+            fullName = String.format("%s_%s", f.getName(), fullName);
+            f = this.getScope();
+        }
+
+        return fullName;
+    }
 }

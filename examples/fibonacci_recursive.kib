@@ -1,0 +1,10 @@
+// Recusive implementation of fibonacci
+func fib(int x) returns int{
+   if (x == 0){ return 0; }
+   if (x == 1){ return 1; }
+   return fib(x - 2) + fib(x - 1);
+}
+
+// 610
+print(fib(15));
+

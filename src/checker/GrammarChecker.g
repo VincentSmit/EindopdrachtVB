@@ -150,7 +150,21 @@ func_declaration:
         }
 
         argumentCount = 0;
-    } ^(ARGS arguments?) ^(BODY commands?)) {
+    } ^(ARGS arguments?) {
+        // Set memory addresses for arguments
+        IdentifierNode arg;
+        int inverse_count;
+        for (int i=0; i < func.getArgs().size(); i++){
+            arg = func.getArgs().get(i);
+            inverse_count = -1 * (func.getArgs().size() - i);
+            arg.setMemAddr(Pair.with(loops.size() - 1, inverse_count));
+
+            log(String.format(
+                "Setting relative address of \%s to (\%s, \%s).",
+                arg.getText(), loops.size() - 1, inverse_count
+            ));
+        }
+    } ^(BODY commands?)) {
         symtab.closeScope();
         loops.pop();
    };
@@ -176,7 +190,7 @@ argument: t=type id=IDENTIFIER<IdentifierNode>{
     ));
 
     // Set memory address of node, which counts backwards for stack-based models
-    inode.setMemAddr(Pair.with(loops.size() - 1, (-1 * argumentCount) - 1));
+    inode.setMemAddr(Pair.with(loops.size() - 1, 0));
 };
 
 arguments: argument {
@@ -184,7 +198,21 @@ arguments: argument {
 } arguments?;
 
 statement:
-    ^(IF if_part ELSE else_part) |
+    ^(PRINT expression) |
+    ^(IF exp=expression {
+        symtab.openScope();
+
+        // Expression must be of type boolean.
+        TypedNode ext = (TypedNode)$exp.tree;
+        if(!(ext.getExprType().equals(Type.Primitive.BOOLEAN))){
+            reporter.error($exp.tree, "Expression must of be of type boolean. Found: " + ext.getExprType() + ".");
+        }
+    } ^(THEN commands?) {
+        symtab.closeScope();
+        symtab.openScope();
+    } (^(ELSE commands?))?){
+        symtab.closeScope();
+    } |
     ^(w=WHILE{
         // Add this loop to the stack of current loops
         loops.peek().getValue1().push($w.tree);
@@ -290,21 +318,6 @@ assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode> ex=expression){
         ));
     }
 };
-
-if_part
-@init{ symtab.openScope(); }
-@after{ symtab.closeScope(); }:
-    ^(ex=expression command*) {
-        TypedNode ext = (TypedNode)$ex.tree;
-        if(!(ext.getExprType().equals(Type.Primitive.BOOLEAN))){
-            reporter.error($ex.tree, "Expression must of be of type boolean. Found: " + ext.getExprType() + ".");
-        }
-    };
-
-else_part
-@init{ symtab.openScope(); }
-@after{ symtab.closeScope(); }:
-    command*;
 
 bool_op: AND | OR;
 same_op: PLUS | MINUS | DIVIDES | MULTIPL | POWER;

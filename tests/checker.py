@@ -12,6 +12,11 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
 
+    def test_relative_addresses(self):
+        stdout, stderr = self.compile("""func x(int a, char b) returns char{}""")
+        self.assertIn("Setting relative address of a to (1, -2).", stdout)
+        self.assertIn("Setting relative address of b to (1, -1).", stdout)
+
     def test_wrong_number_of_arguments(self):
         stdout, stderr = self.compile("""
         func x(int a, char b) returns char{

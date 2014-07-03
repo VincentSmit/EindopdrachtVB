@@ -61,6 +61,7 @@ tokens {
     CALL = 'call';
     VAR = 'var';
     OF = 'of';
+    PRINT = 'print';
 
     // Type keywords
     INTEGER = 'int';
@@ -85,8 +86,8 @@ program: command+ -> ^(PROGRAM command+);
 
 command:
     (IDENTIFIER ASSIGN) => assign_statement SEMICOLON! |
-    declaration |
     statement |
+    declaration |
     expression SEMICOLON!|
     SEMICOLON!;
 
@@ -123,28 +124,33 @@ statement:
     while_statement |
     return_statement |
     for_statement |
+    print_statement |
 
     // Defining both tokens as <ControlNode>s throws a cryptic error. Converting them later
     // in GrammarChecker works :-/.
     BREAK SEMICOLON! |
     CONTINUE SEMICOLON!;
 
-if_part: IF LPAREN expression RPAREN LCURLY command* RCURLY
-             -> expression command*;
+if_part: IF LPAREN expression RPAREN LCURLY commands? RCURLY
+             -> expression ^(THEN commands?);
 
-else_part: ELSE LCURLY (command)* RCURLY
-             -> command*;
+else_part: ELSE LCURLY commands? RCURLY
+             -> ^(ELSE commands?);
 
-if_statement: if_part else_part? -> ^(IF if_part ELSE else_part?);
+if_statement: if_part ep=else_part?
+    -> ^(IF if_part else_part?);
 
 while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
                      -> ^(WHILE expression command*);
 for_statement: FOR IDENTIFIER IN expression LCURLY commands? RCURLY
                    -> ^(FOR IDENTIFIER<IdentifierNode> expression commands?);
+
 return_statement: RETURN expression SEMICOLON -> ^(RETURN expression);
 
 assign_statement: IDENTIFIER ASSIGN expression
                     -> ^(ASSIGN IDENTIFIER<IdentifierNode> expression);
+
+print_statement: PRINT LPAREN expression RPAREN -> ^(PRINT expression);
 
 // Expressions, order of operands:
 // ()
@@ -153,9 +159,9 @@ assign_statement: IDENTIFIER ASSIGN expression
 // +, -
 // <=, >=, <, >, ==, !=, ||, &&
 expression:
-    (IDENTIFIER LPAREN) => call_expression|
     expressionAO |
     array_literal ;
+
 expressionAO: expressionLO (AND<TypedNode>^ expressionLO | OR<TypedNode>^ expressionLO)*;
 expressionLO: expressionPM ((LT<TypedNode>^ | GT<TypedNode>^ | LTE<TypedNode>^ | GTE<TypedNode>^ | EQ<TypedNode>^ | NEQ<TypedNode>^) expressionPM)*;
 expressionPM: expressionMD ((PLUS<TypedNode>^ | MINUS<TypedNode>^) expressionMD)*;
@@ -167,6 +173,7 @@ call_expression: IDENTIFIER LPAREN expression_list? RPAREN
                      -> ^(CALL IDENTIFIER expression_list?);
 
 operand:
+    (IDENTIFIER LPAREN) => call_expression|
     LPAREN! expression RPAREN! |
     IDENTIFIER<IdentifierNode> |
     NUMBER<TypedNode> |
@@ -193,7 +200,7 @@ composite_type: primitive_type LBLOCK expression RBLOCK
                     -> ^(ARRAY primitive_type expression);
 
 // Lexer rules
-IDENTIFIER: LETTER (LETTER | DIGIT)*;
+IDENTIFIER: (LETTER | UNDERSCORE) (LETTER | DIGIT | UNDERSCORE)*;
 STRING_VALUE:  '\'' ( '\\' '\''? | ~('\\' | '\'') )* '\'';
 
 NUMBER: DIGIT+;
@@ -203,5 +210,6 @@ WS: (' ' | '\t' | '\f' | '\r' | '\n')+ { $channel=HIDDEN; };
 fragment DIGIT : ('0'..'9');
 fragment LOWER : ('a'..'z');
 fragment UPPER : ('A'..'Z');
+fragment UNDERSCORE : '_';
 fragment LETTER : LOWER | UPPER;
 

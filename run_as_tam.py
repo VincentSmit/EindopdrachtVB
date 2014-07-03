@@ -8,11 +8,12 @@ import tempfile
 
 from tests.test import compile_grammar, check_antlr, CLASSPATH
 
-print("Checking for antlr..")
-check_antlr()
+if "--compile" in sys.argv:
+    print("Checking for antlr..")
+    check_antlr()
 
-print("Compiling grammar..")
-compile_grammar()
+    print("Compiling grammar..")
+    compile_grammar()
 
 
 def run_tam(filename):

@@ -54,7 +54,7 @@ public class Assembler {
             "\\s*" + //whitespace
             "(\\(([a-zA-Z0-9]+)\\))?" + //n  (group 5)
             "\\s*" + //whitespace
-            "(-?[a-zA-Z0-9]+)?" + //d (group 6)
+            "(-?[a-zA-Z0-9_]+)?" + //d (group 6)
             "\\s*" + //whitespace
             "(\\[([a-zA-Z0-9]+)\\])?" + //r (group 8)
             "\\s*" + //whitespace
