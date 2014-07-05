@@ -7,6 +7,49 @@ GRAMMAR_OPTS = ("-no_checker", "-ast")
 class GrammarTest(AntlrTest):
     def compile(self, grammar):
         return super(GrammarTest, self).compile(grammar, options=GRAMMAR_OPTS)
+    
+    def test_pointers(self):
+        stdout, stderr = self.compile("%%int a;")
+        self.assertEqual(stdout, "(PROGRAM (VAR (% (% int)) a))")
+
+        stdout, stderr = self.compile("f(&a);")
+        self.assertEqual(stdout, "(PROGRAM (CALL f (& a)))")
+
+        stdout, stderr = self.compile("f(&&a);")
+        self.assertTrue(stderr)
+
+        stdout, stderr = self.compile("f(%a);")
+        self.assertEqual(stdout, "(PROGRAM (CALL f (% a)))")
+
+        stdout, stderr = self.compile("f(%%a);")
+        self.assertEqual(stdout, "(PROGRAM (CALL f (% (% a))))")
+
+        stdout, stderr = self.compile("func f(%int a) returns int{}")
+        self.assertFalse(stderr)
+        
+        return
+        stdout, stderr = self.compile("""
+            int a = 2;
+            %int b = &a;
+            b% = 5;
+        """)
+        print(stdout)
+        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (EXPR 2)) (VAR (% int) b) (ASSIGN b (EXPR (& a))) (ASSIGN b (% (EXPR 5))))", stdout)
+
+        stdout, stderr = self.compile("b%%% = 4;");
+        self.assertEqual("(PROGRAM (ASSIGN b (% (% (% (EXPR 4))))))", stdout)
+
+    def test_tam(self):
+        stdout, stderr = self.compile("""
+        __tam__(int, '
+            LOADL 9
+            POP (0) 1
+        ');""")
+
+        self.assertEqual(stdout, """(PROGRAM (__tam__ int '
+            LOADL 9
+            POP (0) 1
+        '))""")
 
     def test_empty_declaration(self):
         """Test empty declaration (without assignment)"""
@@ -18,18 +61,18 @@ class GrammarTest(AntlrTest):
     def test_declaration(self):
         """Test declaration + assignment"""
         stdout, stderr = self.compile("int a = 2;")
-        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a 2))", stdout)
+        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (EXPR 2)))", stdout)
         self.assertEqual("", stderr)
 
         stdout, stderr = self.compile("char a = 'c';")
-        self.assertEqual("(PROGRAM (VAR char a) (ASSIGN a 'c'))", stdout)
+        self.assertEqual("(PROGRAM (VAR char a) (ASSIGN a (EXPR 'c')))", stdout)
         self.assertEqual("", stderr)
 
     def test_string_value(self):
         """Does escaping work?"""
         # Note: this should raise an error while checking (char --> length 1)
         stdout, stderr = self.compile(r"char a = 'c\'';")
-        self.assertEqual(r"(PROGRAM (VAR char a) (ASSIGN a 'c\''))", stdout)
+        self.assertEqual(r"(PROGRAM (VAR char a) (ASSIGN a (EXPR 'c\'')))", stdout)
         self.assertEqual("", stderr)
 
     def test_function_declaration(self):
@@ -50,7 +93,7 @@ class GrammarTest(AntlrTest):
     def test_array_literal(self):
         # This is wrong of course (types don't match), but we don't run a checker yet
         stdout, stderr = self.compile(r"int a = [1, 2, 3];")
-        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (ARRAY 1 2 3)))", stdout)
+        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (EXPR (ARRAY 1 2 3))))", stdout)
         self.assertEqual("", stderr)
 
     def test_array_declaration(self):
@@ -65,12 +108,12 @@ class GrammarTest(AntlrTest):
 
     def test_operator(self):
         stdout, stderr = self.compile(r"int a; a = a + b;")
-        self.assertEqual("(PROGRAM (VAR int a) (= a (+ a b)))", stdout)
+        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (EXPR (+ a b))))", stdout)
         self.assertEqual("", stderr)
 
     def test_while(self):
         stdout, stderr = self.compile(r"while(a<b){ a = b + 1; }")
-        self.assertEqual("(PROGRAM (while (< a b) (= a (+ b 1))))", stdout)
+        self.assertEqual("(PROGRAM (while (< a b) (ASSIGN a (EXPR (+ b 1)))))", stdout)
         self.assertEqual("", stderr)
 
     def test_for(self):
@@ -85,35 +128,39 @@ class GrammarTest(AntlrTest):
 
     def test_if(self):
         stdout, stderr = self.compile(r"if(a<b){ a = b + 1; }")
-        self.assertEqual("(PROGRAM (IF (< a b) (= a (+ b 1)) ELSE))", stdout)
+        self.assertEqual("(PROGRAM (IF (< a b) (THEN (ASSIGN a (EXPR (+ b 1))))))", stdout)
         self.assertEqual("", stderr)
 
     def test_if_else(self):
         stdout, stderr = self.compile(r"if(a<b){ a = b; } else { b = a; }")
-        self.assertEqual("(PROGRAM (IF (< a b) (= a b) ELSE (= b a)))", stdout)
+        self.assertEqual("(PROGRAM (IF (< a b) (THEN (ASSIGN a (EXPR b))) (else (ASSIGN b (EXPR a)))))", stdout)
         self.assertEqual("", stderr)
 
     def test_nested(self):
         stdout, stderr = self.compile(r"if(a<b){ if(a<b){ a = b; }}")
-        self.assertEqual("(PROGRAM (IF (< a b) (IF (< a b) (= a b) ELSE) ELSE))", stdout)
+        self.assertEqual("(PROGRAM (IF (< a b) (THEN (IF (< a b) (THEN (ASSIGN a (EXPR b)))))))", stdout)
         self.assertEqual("", stderr)
 
     def test_boolean(self):
         stdout, stderr = self.compile(r"int a = true;")
-        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a true))", stdout)
+        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (EXPR true)))", stdout)
         self.assertEqual("", stderr)
 
         stdout, stderr = self.compile(r"int a = false;")
-        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a false))", stdout)
+        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (EXPR false)))", stdout)
         self.assertEqual("", stderr)
 
     def test_operator_precedence(self):
         stdout, stderr = self.compile("auto a = 3 + 4 / 5 ^ 2 <= 6 ^ (3+4) / 5;")
-        self.assertEqual(stdout, "(PROGRAM (VAR auto a) (ASSIGN a (<= (+ 3 (/ 4 (^ 5 2))) (/ (^ 6 (+ 3 4)) 5))))")
+        self.assertEqual(stdout, "(PROGRAM (VAR auto a) (ASSIGN a (EXPR (<= (+ 3 (/ 4 (^ 5 2))) (/ (^ 6 (+ 3 4)) 5)))))")
 
     def test_call_operator_precedence(self):
         stdout, stderr = self.compile("""a() + b();""")
         self.assertEqual(stdout, "(PROGRAM (+ (CALL a) (CALL b)))")
+
+    def test_multiline_string(self):
+        stdout, stderr = self.compile("""char a = 'ab\nc';""")
+        self.assertEqual(stdout, "(PROGRAM (VAR char a) (ASSIGN a (EXPR 'ab\nc')))")
 
     # INVALID PROGRAMS
 

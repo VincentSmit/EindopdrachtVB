@@ -12,6 +12,68 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
 
+    def test_undefined(self):
+        stdout, stderr = self.compile("print(a);")
+        self.assertIn("Could not find symbol.", stderr)
+
+    def test_pointers(self):
+        stdout, stderr = self.compile("""
+            int a  = 3;
+            int b = &a;
+        """)
+        self.assertIn("Cannot assign value of Type<POINTER, Type<INTEGER>> to variable of Type<INTEGER>", stderr);
+
+        stdout, stderr = self.compile("int a = 3; %int b = &a; """)
+        self.assertFalse(stderr);
+
+        stdout, stderr = self.compile("int a = 3; print(%(&a));""")
+        self.assertFalse(stderr);
+
+        stdout, stderr = self.compile("int x = 5; print(%x);""")
+        self.assertIn("Cannot dereference non-pointer", stderr)
+
+        stdout, stderr = self.compile("""
+            int x = 5;
+            func test(%int a) returns int{
+                return 0;
+            }
+            print(&x);
+        """)
+        self.assertFalse(stderr)
+
+        stdout, stderr = self.compile("""
+            int x = 5;
+            %int y = &x;
+            %%int z = &y;
+            z% = 9;
+        """)
+        self.assertIn("Cannot assign value of Type<POINTER, Type<INTEGER>> to variable of Type<POINTER, Type<POINTER, Type<INTEGER>>>", stderr);
+
+        stdout, stderr = self.compile("""
+            int x = 5;
+            %int y = &x;
+            %%int z = &y;
+            z%% = 9;
+        """)
+        self.assertFalse(stderr)
+
+    def test_array_literal(self):
+        stdout, stderr = self.compile("""int[3] a = [1, 'c', 3]; """)
+        self.assertIn("Elements of array must be of same type. Found: Type<CHARACTER>, expected Type<INTEGER>.", stderr)
+
+        stdout, stderr = self.compile("""char[3] a = [1, 2, 3]; """)
+        self.assertIn("Cannot assign value of Type<ARRAY, Type<INTEGER>> to variable of Type<ARRAY, Type<CHARACTER>>.", stderr)
+
+        stdout, stderr = self.compile("""int[4] a = [1, 2, 3]; """)
+        self.assertFalse(stderr)
+
+        stdout, stderr = self.compile("""auto[3] a = [1]; """)
+        self.assertIn("Setting 'a' to Type<ARRAY, Type<INTEGER>>", stdout)
+        self.assertFalse(stderr)
+
+        stdout, stderr = self.compile("""auto x; auto[1] a = [x]; """)
+        self.assertIn("Cannot assign AUTO types to an array of AUTO.", stderr)
+
     def test_relative_addresses(self):
         stdout, stderr = self.compile("""func x(int a, char b) returns char{}""")
         self.assertIn("Setting relative address of a to (1, -2).", stdout)
@@ -31,7 +93,7 @@ class CheckerTest(AntlrTest):
         func x() returns char{ return 'c'; }
         int a = x();
         """)
-        self.assertIn("Cannot assign value of Type<INTEGER> to variable of type Type<CHARACTER>.", stderr)
+        self.assertIn("Cannot assign value of Type<CHARACTER> to variable of Type<INTEGER>.", stderr)
 
     def test_wrong_arguments(self):
         stdout, stderr = self.compile("""
@@ -173,6 +235,13 @@ class CheckerTest(AntlrTest):
         stdout, stderr = self.compile("auto a = true;")
         self.assertIn("Setting 'a' to Type<BOOLEAN>", stdout.split("\n"))
 
+    def test_raw_type(self):
+        stdout, stderr = self.compile("func a() returns int{ return __tam__(int, 'PUSH 0'); }")
+        self.assertFalse(stderr)
+
+        stdout, stderr = self.compile("func a() returns char{ return __tam__(int, 'PUSH 0'); }")
+        self.assertIn("Expected Type<CHARACTER>, but got Type<INTEGER>.", stderr)
+
     def test_if(self):
         stdout, stderr = self.compile("int a = 3; if(a){}")
         self.assertTrue("Expression must of be of type boolean. Found: Type<INTEGER>." in stderr)
@@ -207,7 +276,7 @@ Variable must be of same type as elements of iterable:
 
     def test_assign(self):
         stdout, stderr = self.compile("int a = 'c';")
-        self.assertIn("Cannot assign value of Type<INTEGER> to variable of type Type<CHARACTER>.", stderr)
+        self.assertIn("Cannot assign value of Type<CHARACTER> to variable of Type<INTEGER>.", stderr)
 
 if __name__ == '__main__':
     import unittest

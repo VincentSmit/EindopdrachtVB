@@ -74,7 +74,8 @@ program: ^(p=PROGRAM<FunctionNode> {
     
 import_statement: ^(IMPORT from=IDENTIFIER imprt=IDENTIFIER);
 command: declaration | statement | expression{
-    emitter.emit("POP(0) 1", "Pop (unused) result of expression");
+    int size = ($expression.value == null) ? 1 : $expression.value.getSize();
+    emitter.emit("POP(0) " + size, "Pop (unused) result of expression");
 };
 commands: command commands?;
 
@@ -134,16 +135,42 @@ func_declaration: ^(FUNC id=IDENTIFIER {
     funcs.pop();
 };
 
-assignment: ^(ASSIGN id=IDENTIFIER expression){
-    emitter.emit("STORE(1) " + addr((IdentifierNode)id), $id.text);
+assign returns [int value=0]:
+    ^(ASTERIX a=assign){
+        $value = $a.value + 1;
+    }|
+    ^(EXPR expression);
+
+assignment: ^(ASSIGN id=IDENTIFIER assign){
+    String address = addr((IdentifierNode)id);
+
+    if ($assign.value == 0){
+        // We can prevent instruction if we do not need to dereference pointers; we
+        // can directly store the result on the desired location
+        emitter.emit("STORE(1) " + address, $id.text);
+    } else {
+        // Load address of current identifier onto the stack
+        emitter.emit("LOADA " + address, $id.text);
+
+        // For each dereference (\%) found, load pointer which is the current
+        // pointer is pointing to (nice...)
+        for (int i=0; i < $assign.value; i++){
+            emitter.emit("LOADI (1)");
+        }
+
+        // Pop address from stack and store results
+        emitter.emit("STOREI(1)");
+    }
 };
 
 
 type: primitive_type | composite_type;
 primitive_type: INTEGER | BOOLEAN | CHARACTER;
-composite_type: ARRAY primitive_type expression;
+composite_type:
+    ARRAY primitive_type expression |
+    ^(ASTERIX type);
 
-expression:
+expression returns [CommonNode value]:
       ^(PLUS x=expression y=expression)   { emitter.emit("CALL add"); }
     | ^(MINUS x=expression y=expression)  { emitter.emit("CALL sub"); }
     | ^(LT x=expression y=expression)     { emitter.emit("CALL lt"); }
@@ -164,18 +191,28 @@ expression:
         String base = register(currentLevel - funcLevel, currentLevel);
         emitter.emit(String.format("CALL (\%s) \%s[CB]", base, func.getFullName()));
     }
-    | operand;
+    | ^(a=AMPERSAND id=IDENTIFIER){
+        emitter.emit(String.format("LOADA \%s", addr((IdentifierNode)id)), "\%" + $id.text);
+    }
+    | operand {
+        $value = $operand.value;
+    };
 
 expression_list: expression expression_list?;
 
-operand: 
+operand returns [CommonNode value]:
     id=IDENTIFIER{
-       emitter.emit("LOAD(1) " + addr((IdentifierNode)id), $id.text);
+        emitter.emit("LOAD(1) " + addr((IdentifierNode)id), $id.text);
     } |
     n=NUMBER{
         emitter.emit("LOADL " + $n.text);
     } |
     s=STRING_VALUE{
         emitter.emit("LOADL " + (int)($s.text).charAt(1));
+    } |
+    ^(arr=ARRAY{
+        $value = arr;
+    } expression*){
+
     };
 

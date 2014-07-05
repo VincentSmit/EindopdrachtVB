@@ -20,6 +20,7 @@ tokens {
     DOUBLE_QUOTE = '"';
     SINGLE_QUOTE = '\'';
     BODY = 'body';
+    EXPR = 'assignment_expression';
 
     // operators
     PLUS = '+';
@@ -36,6 +37,10 @@ tokens {
     ASSIGN = '=';
     OR = '||';
     AND = '&&';
+
+    // Pointers
+    AMPERSAND = '&'; // Reference
+    ASTERIX = '%'; // Dereference
 
     // keywords
     PROGRAM = 'program';
@@ -62,6 +67,7 @@ tokens {
     VAR = 'var';
     OF = 'of';
     PRINT = 'print';
+    TAM = '__tam__';
 
     // Type keywords
     INTEGER = 'int';
@@ -85,7 +91,16 @@ tokens {
 program: command+ -> ^(PROGRAM command+);
 
 command:
+    // Antlr complains about being able to match multiple alternatives for 'ASTERIX' even though we prioritise
+    // it below. Antlr then goes on and tells us it disabled rule 5 and 6, which is exactly what we wanted
+    // to achieve with the line below in the first place. Oh well..
+    //
+    // @Theo (or PA): we can solve this by either instructing antlr to ignore 5/6 if ASTERIX is matched (what
+    // essentially happens now) or by separating `expression` into `expression` and `inline_expression`
+    // which is its own horror. All in all, we think letting antlr figure it out on its own is not a clean
+    // solution but nonetheless a consciously chosen one.
     (IDENTIFIER ASSIGN) => assign_statement SEMICOLON! |
+    (IDENTIFIER ASTERIX) => assign_statement SEMICOLON! |
     statement |
     declaration |
     expression SEMICOLON!|
@@ -93,17 +108,16 @@ command:
 
 commands: command commands?;
 
-// DECLARATIONS 
+// DECLARMULTIPLIONS
 declaration:
     var_declaration |
     scope_declaration;
 
 var_declaration: type IDENTIFIER (a=var_assignment)? SEMICOLON
                      -> {a == null}? ^(VAR type IDENTIFIER<IdentifierNode>)
-                     -> ^(VAR type IDENTIFIER<IdentifierNode>) ^(ASSIGN IDENTIFIER<IdentifierNode> $a);
+                     -> ^(VAR type IDENTIFIER<IdentifierNode>) ^(ASSIGN IDENTIFIER<IdentifierNode> ^(EXPR $a));
 
 var_assignment: ASSIGN! expression;
-assignment: ASSIGN expression;
 
 scope_declaration: 
     func_declaration; // |
@@ -131,6 +145,7 @@ statement:
     BREAK SEMICOLON! |
     CONTINUE SEMICOLON!;
 
+
 if_part: IF LPAREN expression RPAREN LCURLY commands? RCURLY
              -> expression ^(THEN commands?);
 
@@ -147,8 +162,12 @@ for_statement: FOR IDENTIFIER IN expression LCURLY commands? RCURLY
 
 return_statement: RETURN expression SEMICOLON -> ^(RETURN expression);
 
-assign_statement: IDENTIFIER ASSIGN expression
-                    -> ^(ASSIGN IDENTIFIER<IdentifierNode> expression);
+assign:
+    ASTERIX^ assign |
+    ASSIGN expression -> ^(EXPR expression);
+
+assign_statement: IDENTIFIER assign
+                    -> ^(ASSIGN IDENTIFIER assign);
 
 print_statement: PRINT LPAREN expression RPAREN -> ^(PRINT expression);
 
@@ -160,6 +179,7 @@ print_statement: PRINT LPAREN expression RPAREN -> ^(PRINT expression);
 // <=, >=, <, >, ==, !=, ||, &&
 expression:
     expressionAO |
+    raw_expression |
     array_literal ;
 
 expressionAO: expressionLO (AND<TypedNode>^ expressionLO | OR<TypedNode>^ expressionLO)*;
@@ -169,11 +189,15 @@ expressionMD: expressionPW ((MULTIPL<TypedNode>^ | DIVIDES<TypedNode>^) expressi
 expressionPW: operand (POWER<TypedNode>^ operand)*;
 
 expression_list: expression (COMMA! expression_list)?;
+raw_expression: TAM^ LPAREN! type COMMA! STRING_VALUE RPAREN!;
 call_expression: IDENTIFIER LPAREN expression_list? RPAREN
                      -> ^(CALL IDENTIFIER expression_list?);
 
 operand:
     (IDENTIFIER LPAREN) => call_expression|
+    (ASTERIX IDENTIFIER) => ASTERIX^ IDENTIFIER<IdentifierNode> |
+    AMPERSAND^ IDENTIFIER<IdentifierNode> |
+    ASTERIX^ operand |
     LPAREN! expression RPAREN! |
     IDENTIFIER<IdentifierNode> |
     NUMBER<TypedNode> |
@@ -188,6 +212,7 @@ array_value_list: expression (COMMA! array_value_list)?;
 // Types
 type:
     (primitive_type LBLOCK) => composite_type |
+    ASTERIX type -> ^(ASTERIX type) |
     primitive_type;
 
 primitive_type:
@@ -196,8 +221,9 @@ primitive_type:
     CHARACTER<TypedNode> |
     AUTO<TypedNode>;
 
-composite_type: primitive_type LBLOCK expression RBLOCK
-                    -> ^(ARRAY primitive_type expression);
+composite_type:
+    primitive_type LBLOCK expression RBLOCK
+        -> ^(ARRAY primitive_type expression);
 
 // Lexer rules
 IDENTIFIER: (LETTER | UNDERSCORE) (LETTER | DIGIT | UNDERSCORE)*;

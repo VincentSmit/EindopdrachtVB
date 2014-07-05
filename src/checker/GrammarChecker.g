@@ -29,9 +29,16 @@ options {
 @members {
     private SymbolTable<IdEntry> symtab = new SymbolTable<>();
 
-    private IdentifierNode getID(String id){
+    private IdentifierNode getID(CommonNode node, String id) throws InvalidTypeException{
+        if (symtab.retrieve(id) == null){
+            reporter.error(node, "Could not find symbol.");
+        }
         return symtab.retrieve(id).getNode();
     }
+
+    // Upon evaluating pointer assignments (b\% = 3, for example) we need to keep track
+    // of the current type while descending the tree: (ASSIGN b (\% 3)).
+    private Type assignType;
 
     // Used to keep track of arguments in a function definition call
     private int argumentCount;
@@ -42,6 +49,9 @@ options {
 
     // Keep a stack of all loops within functions.
     private Stack<Pair<FunctionNode, Stack<CommonNode>>> loops = new Stack<Pair<FunctionNode, Stack<CommonNode>>>();
+
+    // Keep track of array literals
+    private Stack<TypedNode> arrays = new Stack<>();
 
     public Reporter reporter;
     public void setReporter(Reporter r){ this.reporter = r; }
@@ -56,7 +66,7 @@ options {
         }
 
         if(!(ex1tree.getExprType().equals(ex2tree.getExprType()))){
-            reporter.error(op, "Operator expected operands to be of same type. Found: " +
+            reporter.error(op, "Expected operands to be of same type. Found: " +
             ex1tree.getExprType() + " and " + ex2tree.getExprType() + ".");
         }
 
@@ -84,7 +94,7 @@ command: declaration | expression | statement;
 declaration: var_declaration | scope_declaration;
 
 var_declaration:
-    ^(VAR t=type id=IDENTIFIER<IdentifierNode> assignment?){
+    ^(VAR t=type id=IDENTIFIER<IdentifierNode>){
         IdentifierNode var = (IdentifierNode)$id.tree;
 
         try {
@@ -227,7 +237,7 @@ statement:
         loops.peek().getValue1().push($f.tree);
      } id=IDENTIFIER<IdentifierNode> ex=expression commands?) {
         // Retrieve identifier from symtab.
-        ((IdentifierNode)$id.tree).setRealNode(getID($id.text));
+        ((IdentifierNode)$id.tree).setRealNode(getID($id.tree, $id.text));
 
         // Check if argument is indeed an array
         TypedNode ext = (TypedNode)$ex.tree;
@@ -298,14 +308,37 @@ statement:
     }|
     assignment;
 
-assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode> ex=expression){
+assign:
+    ^(a=ASTERIX<TypedNode> as=assign){
+        ((TypedNode)$a.tree).setExprType(new Type(
+            Type.Primitive.POINTER, ((TypedNode)$as.tree).getExprType()
+        ));
+    } |
+    ^(expr=EXPR<TypedNode> ex=expression){
+        ((TypedNode)$expr.tree).setExprType(((TypedNode)$ex.tree).getExprType());
+
+    };
+
+assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode> ex=assign){
+    IdentifierNode inode = (IdentifierNode)$id.tree;
+
     // Retrieve identifier from symtab.
-    ((IdentifierNode)$id.tree).setRealNode(getID($id.text));
+    inode.setRealNode(getID(inode, $id.text));
+
+    // Set assign type, so we can use it in `assign`
+    assignType = inode.getExprType();
+
 
     // If `id` is AUTO, infer type from expression
-    if(((TypedNode)$id.tree).getExprType().getPrimType().equals(Type.Primitive.AUTO)){
-        ((TypedNode)$id.tree).setExprType((TypedNode)$ex.tree);
-        log(String.format("Setting '\%s' to \%s", $id.text, ((TypedNode)$id.tree).getExprType()));
+    if((inode.getExprType().getPrimType().equals(Type.Primitive.AUTO))){
+        inode.setExprType((TypedNode)$ex.tree);
+        log(String.format("Setting '\%s' to \%s", $id.text, inode.getExprType()));
+    } else if(inode.getExprType().getPrimType().equals(Type.Primitive.ARRAY) &&
+                inode.getExprType().getInnerType().getPrimType().equals(Type.Primitive.AUTO)){
+        // Infer type for arrays
+        inode.setExprType((TypedNode)$ex.tree);
+        log(String.format("Setting '\%s' to \%s", $id.text, inode.getExprType()));
+
     }
 
     TypedNode idt = (TypedNode)$id.tree;
@@ -313,8 +346,8 @@ assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode> ex=expression){
 
     if(!idt.getExprType().equals(ext.getExprType())){
         reporter.error($a.tree, String.format(
-            "Cannot assign value of \%s to variable of type \%s.",
-            idt.getExprType(), ext.getExprType()
+            "Cannot assign value of \%s to variable of \%s.",
+            ext.getExprType(), idt.getExprType()
         ));
     }
 };
@@ -343,7 +376,7 @@ expression:
     ^(c=CALL<TypedNode> id=IDENTIFIER<IdentifierNode>{
         // TODO: Check against function definition
         IdentifierNode idNode = (IdentifierNode)$id.tree;
-        idNode.setRealNode(getID($id.text));
+        idNode.setRealNode(getID($id.tree, $id.text));
         FunctionNode func = calling = (FunctionNode)idNode.getRealNode();
         ((TypedNode)$c.tree).setExprType(func.getReturnType());
 
@@ -375,6 +408,25 @@ expression:
     ^(op=same_bool_op ex1=expression ex2=expression){
         checkSameOp($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
         ((TypedNode)$op.tree).setExprType(Type.Primitive.BOOLEAN);
+    }|
+    ^(tam=TAM<TypedNode> t=type STRING_VALUE){
+        ((TypedNode)$tam.tree).setExprType(((TypedNode)$t.tree).getExprType());
+    }|
+    ^(p=ASTERIX<TypedNode> ex=expression){
+        if(((TypedNode)$ex.tree).getExprType().getPrimType() != Type.Primitive.POINTER){
+            reporter.error($ex.tree, "Cannot dereference non-pointer.");
+        }
+
+        // Dereference variable: take over inner type
+        ((TypedNode)$p.tree).setExprType(((TypedNode)$ex.tree).getExprType().getInnerType());
+    }|
+    ^(p=AMPERSAND<TypedNode> id=IDENTIFIER<IdentifierNode>){
+        // Make pointer to variable
+        ((IdentifierNode)$id.tree).setRealNode(getID($id.tree, $id.text));
+
+        ((TypedNode)$p.tree).setExprType(new Type(
+            Type.Primitive.POINTER, ((IdentifierNode)$id.tree).getExprType()
+        ));
     };
 
 
@@ -392,11 +444,42 @@ composite_type:
     ^(arr=ARRAY<TypedNode> t=primitive_type expression){
         Type ttype = ((TypedNode)$t.tree).getExprType();
         ((TypedNode)$arr.tree).setExprType(new Type(Type.Primitive.ARRAY, ttype));
+    }|
+    ^(a=ASTERIX<TypedNode> t=type){
+        ((TypedNode)$a.tree).setExprType(new Type(
+            Type.Primitive.POINTER, ((TypedNode)$t.tree).getExprType()
+        ));
+    };
+
+array_expression:
+    ex=expression{
+        Type arrType = arrays.peek().getExprType();
+        Type expType = ((TypedNode)$ex.tree).getExprType();
+
+        if(arrType.getInnerType().getPrimType() == Type.Primitive.AUTO){
+            // We are the first one!
+            arrType.setInnerType(expType);
+        }
+
+        if(arrType.getInnerType().getPrimType() == Type.Primitive.AUTO){
+            // If this type is *still* AUTO, we do not know what to do.
+            reporter.error($ex.tree, String.format(
+                "Cannot assign AUTO types to an array of AUTO."
+            ));
+        }
+
+        // Checking type against previous array element (essentially)
+        if (!arrType.getInnerType().equals(expType)){
+            reporter.error($ex.tree, String.format(
+                "Elements of array must be of same type. Found: \%s, expected \%s.",
+                expType, arrType.getInnerType()
+            ));
+        }
     };
 
 operand:
     id=IDENTIFIER<IdentifierNode> {
-        ((IdentifierNode)$id.tree).setRealNode(getID($id.text));
+        ((IdentifierNode)$id.tree).setRealNode(getID($id.tree, $id.text));
     } |
     n=NUMBER {
         ((TypedNode)$n.tree).setExprType(Type.Primitive.INTEGER);
@@ -406,4 +489,13 @@ operand:
     } |
     b=(TRUE|FALSE){
         ((TypedNode)$b.tree).setExprType(Type.Primitive.BOOLEAN);
-    };
+    } |
+    ^(arr=ARRAY<TypedNode> {
+        TypedNode array = (TypedNode)$arr.tree;
+        array.setExprType(Type.Primitive.ARRAY);
+        array.getExprType().setInnerType(new Type(Type.Primitive.AUTO));
+        arrays.push(array);
+    } values=array_expression*){
+        arrays.pop();
+    } 
+;

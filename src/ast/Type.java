@@ -7,7 +7,8 @@ public class Type {
         BOOLEAN,
         ARRAY,
         AUTO,
-        FUNCTION
+        FUNCTION,
+        POINTER
     }
 
     private Primitive primType;
