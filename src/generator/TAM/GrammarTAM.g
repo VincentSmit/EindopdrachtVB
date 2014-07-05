@@ -214,5 +214,9 @@ operand returns [CommonNode value]:
         $value = arr;
     } expression*){
 
-    };
+    } |
+    ^(TAM type s=STRING_VALUE){
+        emitter.emit($s.text.substring(1, $s.text.length() - 1));
+    }
+    ;
 

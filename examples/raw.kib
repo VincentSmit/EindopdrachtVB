@@ -1,0 +1,5 @@
+int a = __tam__(int, '
+    LOADL 53 ; w00t, Im native TAM!
+');
+
+print(a);
