@@ -81,7 +81,16 @@ public class Grammar {
             // Print parsed AST
             CommonTree tree = (CommonTree) result.getTree();
             if (options.contains(Option.AST)) {
-                System.out.println(tree.toStringTree());
+                System.out.println(tree.toStringTree().replace("\n", "\\n"));
+                System.out.flush();
+
+                // Allow operating system to print to console (because flush()
+                // doesn't work..)
+                try {
+                    Thread.sleep(500);
+                } catch(InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
             }
 
             // Decorate tree with types

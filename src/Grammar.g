@@ -21,6 +21,7 @@ tokens {
     SINGLE_QUOTE = '\'';
     BODY = 'body';
     EXPR = 'assignment_expression';
+    GET = 'get_expression';
 
     // operators
     PLUS = '+';
@@ -74,17 +75,16 @@ tokens {
     CHARACTER = 'char';
     BOOLEAN = 'bool';
     AUTO = 'auto';
+    // VAR
 }
 
 @lexer::header {
 }
 
 @header {
-    import ast.TypedNode;
-    import ast.IdentifierNode;
-    import ast.FunctionNode;
-    import ast.ControlNode;
-    import ast.CommonNode;
+    import ast.*;
+    import org.antlr.runtime.CommonTokenStream;
+    import org.antlr.runtime.ANTLRInputStream;
 }
 
 // Parser rules
@@ -139,6 +139,7 @@ statement:
     return_statement |
     for_statement |
     print_statement |
+    import_statement |
 
     // Defining both tokens as <ControlNode>s throws a cryptic error. Converting them later
     // in GrammarChecker works :-/.
@@ -162,6 +163,25 @@ for_statement: FOR IDENTIFIER IN expression LCURLY commands? RCURLY
 
 return_statement: RETURN expression SEMICOLON -> ^(RETURN expression);
 
+// Shamelessly stolen from:
+//  https://theantlrguy.atlassian.net/wiki/pages/viewpage.action?pageId=2686987
+import_statement
+@init { CommonNode includetree = null; }:
+  IMPORT s=STRING_VALUE {
+    try {
+      String filename = $s.text.substring(1, $s.text.length() - 1);
+      GrammarLexer lexer = new GrammarLexer(new ANTLRFileStream(filename + ".kib"));
+      GrammarParser parser = new GrammarParser(new CommonTokenStream(lexer));
+      parser.setTreeAdaptor(new CommonNodeAdaptor());
+      includetree = (CommonNode)(parser.program().getTree());
+    } catch (Exception fnf) {
+        // TODO: Error handling?
+      ;
+    }
+  }
+  -> ^({includetree})
+;
+
 assign:
     ASTERIX^ assign |
     ASSIGN expression -> ^(EXPR expression);
@@ -180,7 +200,7 @@ print_statement: PRINT LPAREN expression RPAREN -> ^(PRINT expression);
 expression:
     expressionAO |
     raw_expression |
-    array_literal ;
+    array_literal;
 
 expressionAO: expressionLO (AND<TypedNode>^ expressionLO | OR<TypedNode>^ expressionLO)*;
 expressionLO: expressionPM ((LT<TypedNode>^ | GT<TypedNode>^ | LTE<TypedNode>^ | GTE<TypedNode>^ | EQ<TypedNode>^ | NEQ<TypedNode>^) expressionPM)*;
@@ -192,8 +212,11 @@ expression_list: expression (COMMA! expression_list)?;
 raw_expression: TAM^ LPAREN! type COMMA! STRING_VALUE RPAREN!;
 call_expression: IDENTIFIER LPAREN expression_list? RPAREN
                      -> ^(CALL IDENTIFIER expression_list?);
+get_expression: IDENTIFIER LBLOCK expression RBLOCK
+                    -> ^(GET IDENTIFIER expression);
 
 operand:
+    (IDENTIFIER LBLOCK) => get_expression|
     (IDENTIFIER LPAREN) => call_expression|
     (ASTERIX IDENTIFIER) => ASTERIX^ IDENTIFIER<IdentifierNode> |
     AMPERSAND^ IDENTIFIER<IdentifierNode> |
@@ -219,7 +242,8 @@ primitive_type:
     INTEGER<TypedNode> |
     BOOLEAN<TypedNode> |
     CHARACTER<TypedNode> |
-    AUTO<TypedNode>;
+    AUTO<TypedNode> |
+    VAR<TypedNode>;
 
 composite_type:
     primitive_type LBLOCK expression RBLOCK

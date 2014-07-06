@@ -1,0 +1,36 @@
+
+// Allocate space on heap, containing `size` words. You most certainly want to
+// assign the return value to a pointer type, for example:
+//
+// %int p = alloc(5);
+//
+// The caller is responsible for calling free on the returned pointer in order
+// to reclaim heap space.
+func alloc(int size) returns %var{
+    return __tam__(%var, '
+                         LOAD(1) -1[LB]                ; Fetch size
+                         LOADL 1                       ; Add one to size in order to store
+                         CALL add                      ; ..it for a seq call to free
+                         CALL new                      ; Allocate space on heap
+                         LOAD(1) -1[LB]                ; Fetch size
+                         LOADL 1                       ; (Add one again)
+                         CALL add;                     ; 
+                         LOAD(1) -2[ST]                ; Copy pointer
+                         STOREI(1)                     ; Store size of allocation
+                         LOADL 1                       ; 
+                         CALL add                      ; Let user believe allocating is magic
+    ');
+}
+
+// Reclaim space once claimed with alloc()
+func free(%var p) returns int{
+    return __tam__(int, '
+                         LOAD(1) -1[LB]                ; Fetch p
+                         LOADL 1                       ; Substract one to access size
+                         CALL sub                      ; 
+                         LOADI(1)                      ; Fetch size from pointer
+                         LOAD(1) -1[LB]                ; Fetch p
+                         CALL dispose                  ; Clean heap 
+                         LOADL 0                       ; Load return argument to make compiler happy
+    ');
+}
