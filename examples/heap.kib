@@ -1,0 +1,14 @@
+import 'builtins/heap';
+
+// That sneaky bastard takes 11 words, not 10!
+%int a = alloc(10);
+print(%(a - 1));
+
+// We can use it as an array, more or less :)
+%int b = a;
+b% = 3;
+b = b + 1;
+b% = 4;
+
+// Deallocate heap
+free(a);

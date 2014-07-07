@@ -70,7 +70,7 @@ class AntlrTest(unittest.TestCase):
                 fp.write(grammar.encode('utf-8'))
                 fp.flush()
 
-                args = ("java", "-classpath", CLASSPATH, "Grammar") + tuple(options) + (fp.name,)
+                args = ("java", "-classpath", CLASSPATH, "Grammar", "-newlines") + tuple(options) + (fp.name,)
                 process = subprocess.Popen(args, stdout=PIPE, stderr=PIPE)
                 stdout, stderr = process.communicate()
 
