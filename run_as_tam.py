@@ -5,6 +5,7 @@ import os
 import sys
 import subprocess
 import tempfile
+import time
 
 from tests.test import compile_grammar, check_antlr, CLASSPATH
 
@@ -28,7 +29,7 @@ def run_tam(filename):
         return
 
     # Print AST
-    print("AST: ", stdout.split("\n")[0])
+    #print("AST: ", stdout.split("\n")[0])
 
     with tempfile.NamedTemporaryFile(suffix=".tam") as tam:
         tam_code = "\n".join(stdout.split("\n")[1:])

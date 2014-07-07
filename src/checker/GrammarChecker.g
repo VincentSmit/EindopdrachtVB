@@ -89,7 +89,7 @@ program
 } command+);
 
 commands: command commands?;
-command: declaration | expression | statement;
+command: declaration | expression | statement | ^(PROGRAM command+);
 
 declaration: var_declaration | scope_declaration;
 
@@ -108,6 +108,11 @@ var_declaration:
 
         // Copy expression type of `t`
         var.setExprType(((TypedNode)$t.tree).getExprType());
+
+        // Disallow variable type
+        if (var.getExprType().containsVariableType()){
+            reporter.error($id.tree, "Variable cannot have variable type.");
+        }
 
         // Register variable with function
         FunctionNode func = loops.peek().getValue0();
@@ -280,7 +285,7 @@ statement:
         }
 
         // Test equivalence of types
-        if (!func.getReturnType().equals(expr.getExprType())){
+        if (!func.getReturnType().equals(expr.getExprType(), true)){
             reporter.error(ret, String.format(
                 "Expected \%s, but got \%s.", func.getReturnType(), expr.getExprType())
             );
@@ -344,7 +349,7 @@ assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode> ex=assign){
     TypedNode idt = (TypedNode)$id.tree;
     TypedNode ext = (TypedNode)$ex.tree;
 
-    if(!idt.getExprType().equals(ext.getExprType())){
+    if(!idt.getExprType().equals(ext.getExprType(), true)){
         reporter.error($a.tree, String.format(
             "Cannot assign value of \%s to variable of \%s.",
             ext.getExprType(), idt.getExprType()
@@ -360,7 +365,7 @@ expression_list: expr=expression {
     TypedNode arg = calling.getArgs().get(argumentCount);
     TypedNode exp = (TypedNode)$expr.tree;
 
-    if (!arg.getExprType().equals(exp.getExprType())){
+    if (!arg.getExprType().equals(exp.getExprType(), true)){
         reporter.error(exp, String.format(
             "Argument \%s of \%s expected \%s, but got \%s.",
             argumentCount + 1, calling.getName(),
@@ -403,7 +408,14 @@ expression:
         }
     } |
     ^(op=same_op ex1=expression ex2=expression){
-        checkSameOp($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
+        TypedNode ext1 = (TypedNode)$ex1.tree;
+
+        if(ext1.getExprType().getPrimType() == Type.Primitive.POINTER){
+            log("Warning: pointer arithmatic is unchecked logic.");
+            ((TypedNode)$op.tree).setExprType(ext1.getExprType());
+        } else {
+            checkSameOp($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
+        }
     }|
     ^(op=same_bool_op ex1=expression ex2=expression){
         checkSameOp($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
@@ -438,7 +450,8 @@ primitive_type:
     i=INTEGER<TypedNode>    { ((TypedNode)$i.tree).setExprType(Type.Primitive.INTEGER); }|
     b=BOOLEAN<TypedNode>    { ((TypedNode)$b.tree).setExprType(Type.Primitive.BOOLEAN); }|
     c=CHARACTER<TypedNode>  { ((TypedNode)$c.tree).setExprType(Type.Primitive.CHARACTER); }|
-    a=AUTO<TypedNode>       { ((TypedNode)$a.tree).setExprType(Type.Primitive.AUTO); };
+    a=AUTO<TypedNode>       { ((TypedNode)$a.tree).setExprType(Type.Primitive.AUTO); }|
+    v=VAR<TypedNode>   { ((TypedNode)$v.tree).setExprType(Type.Primitive.VARIABLE); };
 
 composite_type:
     ^(arr=ARRAY<TypedNode> t=primitive_type expression){

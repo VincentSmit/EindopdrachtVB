@@ -12,6 +12,25 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
 
+    def test_variable_type(self):
+        """We only accept variable types on assignments and function returns."""
+        stdout, stderr = self.compile("func malloc(int size) returns %var{ return 6; }")
+        self.assertIn("Expected Type<POINTER, Type<VARIABLE>>, but got Type<INTEGER>.", stderr)
+
+        stdout, stderr = self.compile("func malloc(int size) returns %var{ return &size; }")
+        self.assertFalse(stderr)
+
+        stdout, stderr = self.compile("%%var a;")
+        self.assertIn("Variable cannot have variable type.", stderr)
+
+    def test_pointer_logic(self):
+        stdout, stderr = self.compile("int a; %int b = &a; b = b + 1;")
+        self.assertIn("Warning: pointer arithmatic is unchecked logic.", stdout)
+
+        stdout, stderr = self.compile("int a; %int b = &a; b = 1 + b;")
+        self.assertIn("Expected operands to be of same type. Found: Type<INTEGER> and Type<POINTER, Type<INTEGER>>", stderr)
+
+
     def test_undefined(self):
         stdout, stderr = self.compile("print(a);")
         self.assertIn("Could not find symbol.", stderr)

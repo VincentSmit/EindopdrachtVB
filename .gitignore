@@ -1,0 +1,12 @@
+*.class
+*.pyc
+*~
+*.swp
+*.log
+*.tokens
+*.aux
+*.fls
+*.toc
+*.out
+*.fdb_latexmk
+.idea

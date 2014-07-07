@@ -76,7 +76,7 @@ import_statement: ^(IMPORT from=IDENTIFIER imprt=IDENTIFIER);
 command: declaration | statement | expression{
     int size = ($expression.value == null) ? 1 : $expression.value.getSize();
     emitter.emit("POP(0) " + size, "Pop (unused) result of expression");
-};
+} | ^(PROGRAM command+);
 commands: command commands?;
 
 declaration: var_declaration | func_declaration;
@@ -165,7 +165,7 @@ assignment: ^(ASSIGN id=IDENTIFIER assign){
 
 
 type: primitive_type | composite_type;
-primitive_type: INTEGER | BOOLEAN | CHARACTER;
+primitive_type: INTEGER | BOOLEAN | CHARACTER | VAR;
 composite_type:
     ARRAY primitive_type expression |
     ^(ASTERIX type);
@@ -194,6 +194,9 @@ expression returns [CommonNode value]:
     | ^(a=AMPERSAND id=IDENTIFIER){
         emitter.emit(String.format("LOADA \%s", addr((IdentifierNode)id)), "\%" + $id.text);
     }
+    | ^(p=ASTERIX ex=expression){
+        emitter.emit("LOADI(1)");
+    }
     | operand {
         $value = $operand.value;
     };
@@ -216,7 +219,7 @@ operand returns [CommonNode value]:
 
     } |
     ^(TAM type s=STRING_VALUE){
-        emitter.emit($s.text.substring(1, $s.text.length() - 1));
+        emitter.emit($s.text.substring(1, $s.text.length() - 1).trim());
     }
     ;
 

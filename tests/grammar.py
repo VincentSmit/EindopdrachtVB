@@ -7,6 +7,30 @@ GRAMMAR_OPTS = ("-no_checker", "-ast")
 class GrammarTest(AntlrTest):
     def compile(self, grammar):
         return super(GrammarTest, self).compile(grammar, options=GRAMMAR_OPTS)
+
+    def test_pointer_type(self):
+        stdout, stderr = self.compile("func malloc(int size) returns %var{}")
+        self.assertEqual(stdout, "(PROGRAM (func malloc (% var) (ARGS int size) BODY))")
+
+    def test_import(self):
+        stdout, stderr = self.compile("import 'builtins/test';")
+        self.assertEqual(stdout, "(PROGRAM (PROGRAM (print 1)))");
+
+        stdout, stderr = self.compile("import 'builtins/test'; print(2);")
+        self.assertEqual(stdout, "(PROGRAM (PROGRAM (print 1)) (print 2))");
+
+    def test_array_lookup(self):
+        stdout, stderr = self.compile("a[3];")
+        self.assertEqual(stdout, "(PROGRAM (GET a 3))");
+
+    def test_pointer_logic(self):
+        stdout, stderr = self.compile("""
+            int  a;
+            %int b = &a;
+            b = b + 1;
+            a = %(b - 1);
+        """)
+        self.assertEqual("(PROGRAM (VAR int a) (VAR (% int) b) (ASSIGN b (EXPR (& a))) (ASSIGN b (EXPR (+ b 1))) (ASSIGN a (EXPR (% (- b 1)))))", stdout)
     
     def test_pointers(self):
         stdout, stderr = self.compile("%%int a;")
