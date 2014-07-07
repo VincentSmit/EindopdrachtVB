@@ -321,10 +321,16 @@ assign:
     } |
     ^(expr=EXPR<TypedNode> ex=expression){
         ((TypedNode)$expr.tree).setExprType(((TypedNode)$ex.tree).getExprType());
+    }|
+    ^(g=GET<TypedNode> value=assign index=expression){
+        assignType = assignType.getInnerType();
 
+
+        ((TypedNode)$g.tree).setExprType(((TypedNode)$value.tree).getExprType());
     };
 
-assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode> ex=assign){
+
+assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode>{
     IdentifierNode inode = (IdentifierNode)$id.tree;
 
     // Retrieve identifier from symtab.
@@ -333,29 +339,21 @@ assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode> ex=assign){
     // Set assign type, so we can use it in `assign`
     assignType = inode.getExprType();
 
-
+} ex=assign{
     // If `id` is AUTO, infer type from expression
     if((inode.getExprType().getPrimType().equals(Type.Primitive.AUTO))){
         inode.setExprType((TypedNode)$ex.tree);
         log(String.format("Setting '\%s' to \%s", $id.text, inode.getExprType()));
-    } else if(inode.getExprType().getPrimType().equals(Type.Primitive.ARRAY) &&
-                inode.getExprType().getInnerType().getPrimType().equals(Type.Primitive.AUTO)){
-        // Infer type for arrays
-        inode.setExprType((TypedNode)$ex.tree);
-        log(String.format("Setting '\%s' to \%s", $id.text, inode.getExprType()));
+    } 
 
-    }
-
-    TypedNode idt = (TypedNode)$id.tree;
     TypedNode ext = (TypedNode)$ex.tree;
-
-    if(!idt.getExprType().equals(ext.getExprType(), true)){
+    if(!assignType.equals(ext.getExprType(), true)){
         reporter.error($a.tree, String.format(
             "Cannot assign value of \%s to variable of \%s.",
-            ext.getExprType(), idt.getExprType()
+            ext.getExprType(), assignType
         ));
     }
-};
+});
 
 bool_op: AND | OR;
 same_op: PLUS | MINUS | DIVIDES | MULTIPL | POWER;
@@ -439,8 +437,32 @@ expression:
         ((TypedNode)$p.tree).setExprType(new Type(
             Type.Primitive.POINTER, ((IdentifierNode)$id.tree).getExprType()
         ));
-    };
+    }|
+    ^(get=GET<TypedNode> id=IDENTIFIER<IdentifierNode> ex=expression){
+        TypedNode getn = (TypedNode)$get.tree;
+        IdentifierNode inode = (IdentifierNode)$id.tree;
+        TypedNode ext = (TypedNode)$ex.tree;
+        inode.setRealNode(getID($id.tree, $id.text));
 
+        // We need get_from_array() to function
+        if(symtab.retrieve("get_from_array") == null){
+            reporter.error($id.tree, "Could not find get_from_array(). Did you import 'builtins/array'?");
+        }
+        
+        // Check for array type
+        System.out.println(inode.getExprType());
+        if(inode.getExprType().getPrimType() != Type.Primitive.ARRAY){
+            reporter.error($ex.tree, "Expected array but found " + inode.getExprType());
+        }
+
+        // Result returns inner type of array
+        getn.setExprType(inode.getExprType().getInnerType());
+
+        // Indices must be integers
+        if(!ext.getExprType().equals(Type.Primitive.INTEGER)){
+            reporter.error($ex.tree, "Expected Type<INTEGER> but found " + ext.getExprType());
+        }
+    };
 
 type:
     primitive_type |
@@ -454,9 +476,21 @@ primitive_type:
     v=VAR<TypedNode>   { ((TypedNode)$v.tree).setExprType(Type.Primitive.VARIABLE); };
 
 composite_type:
-    ^(arr=ARRAY<TypedNode> t=primitive_type expression){
-        Type ttype = ((TypedNode)$t.tree).getExprType();
-        ((TypedNode)$arr.tree).setExprType(new Type(Type.Primitive.ARRAY, ttype));
+    ^(arr=ARRAY<TypedNode> t=primitive_type size=expression){
+        TypedNode sizen = (TypedNode)$size.tree;
+        if(!sizen.getExprType().equals(Type.Primitive.INTEGER)){
+            reporter.error($size.tree, "Expected Type<INTEGER> but found " + sizen.getExprType());
+        }
+
+        // Set type of ARRAY
+        ((TypedNode)$arr.tree).setExprType(new Type(
+            Type.Primitive.ARRAY, ((TypedNode)$t.tree).getExprType()
+        ));
+
+        // We need alloc/free for declaration
+        if(symtab.retrieve("alloc") == null){
+            reporter.error($size.tree, "Could not find alloc(). Did you import 'builtins/heap'?");
+        }
     }|
     ^(a=ASTERIX<TypedNode> t=type){
         ((TypedNode)$a.tree).setExprType(new Type(

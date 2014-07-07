@@ -81,13 +81,16 @@ public class Grammar {
             // Print parsed AST
             CommonTree tree = (CommonTree) result.getTree();
             if (options.contains(Option.AST)) {
-                System.out.println(tree.toStringTree().replace("\n", "\\n"));
-                System.out.flush();
+                if (!options.contains(Option.NEWLINES)){
+                    System.out.println(tree.toStringTree().replace("\n", "\\n"));
+                } else {
+                    System.out.println(tree.toStringTree());
+                }
 
                 // Allow operating system to print to console (because flush()
                 // doesn't work..)
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(50);
                 } catch(InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }
@@ -161,6 +164,7 @@ public class Grammar {
         NO_CHECKER,
         NO_INTERPRETER,
         REPORT,
+        NEWLINES,
         TAM;
 
         private Option() {

@@ -10,7 +10,7 @@ import org.antlr.runtime.Token;
  */
 @SuppressWarnings("unchecked")
 public class FunctionNode extends IdentifierNode{
-    public List<IdentifierNode> vars;
+    public List<TypedNode> vars;
     public List<IdentifierNode> args;
 
     public String name;
@@ -18,19 +18,19 @@ public class FunctionNode extends IdentifierNode{
 
     public FunctionNode(CommonNode n){
         super(n);
-        this.vars = new ArrayList<IdentifierNode>();
+        this.vars = new ArrayList<TypedNode>();
         this.args = new ArrayList<IdentifierNode>();
     }
 
     public FunctionNode(Token t){
         super(t);
-        this.vars = new ArrayList<IdentifierNode>();
+        this.vars = new ArrayList<TypedNode>();
         this.args = new ArrayList<IdentifierNode>();
     }
 
     public FunctionNode(FunctionNode n){
         super(n);
-        this.vars = new ArrayList<IdentifierNode>();
+        this.vars = new ArrayList<TypedNode>();
 
         this.vars = n.vars;
         this.args = n.args;
@@ -55,7 +55,7 @@ public class FunctionNode extends IdentifierNode{
         ((FunctionNode)this.getRealNode()).returnType = type;
     }
 
-    public List<IdentifierNode> getVars(){ return this.vars; }
+    public List<TypedNode> getVars(){ return this.vars; }
     public List<IdentifierNode> getArgs(){ return this.args; }
 
     /*

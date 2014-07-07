@@ -34,6 +34,23 @@ options {
             emitter.emit(String.format("PUSH \%s", f.getVars().size()));
     }
 
+    private void cleanFunction(FunctionNode func){
+        // Deallocate all arrays. Yes, I know this is O(n) with n being the amount
+        // of variables in this function. We could keep an extra list for arrays
+        // only, but this is even uglier IMO.
+        for (TypedNode node : funcs.peek().getVars()){
+            if (node.getExprType().getPrimType() == Type.Primitive.ARRAY){
+                emitter.emit("LOADA " + addr((IdentifierNode)node), node.getText());                        
+                emitter.emit("LOADI(1)", "Load heap pointer to array"); 
+                emitter.emit("CALL (L1) free[CB]", "Freeeedooooooom"); 
+                emitter.emit("POP(1) 0", "Pop useless call result");
+            }
+        };
+
+        emitter.emitLabel(func.getFullName(), "after");
+        funcs.pop();
+    }
+
     private String register(int diff, int lookupScopeLevel){
         String base = "LB"; // Local base
         if (diff == 6 || lookupScopeLevel == 0){
@@ -69,6 +86,7 @@ options {
 program: ^(p=PROGRAM<FunctionNode> {
     prepareFunction((FunctionNode)p);
 } import_statement* command+){
+    cleanFunction((FunctionNode)p);
     emitter.emit("HALT");
 };
     
@@ -122,7 +140,13 @@ while_statement
 
 
 // Already handled in function/program declaration
-var_declaration: ^(VAR type id=IDENTIFIER);
+var_declaration: 
+    ^(VAR type id=IDENTIFIER) |
+    ^(VAR ^(ARRAY type expression) id=IDENTIFIER){
+        // We don't never need no static link yo
+        emitter.emit("CALL (L1) alloc[CB]", "Allocate array");
+        emitter.emit("STORE(1) " + addr((IdentifierNode)id), "Store pointer in " + $id.text);
+    };
 
 arguments: argument arguments?;
 argument: t=type id=IDENTIFIER<IdentifierNode>;
@@ -131,8 +155,7 @@ func_declaration: ^(FUNC id=IDENTIFIER {
     FunctionNode func = (FunctionNode)id;
     prepareFunction(func);
 } type ^(ARGS arguments?) ^(BODY commands?)){
-    emitter.emitLabel(func.getFullName(), "after");
-    funcs.pop();
+    cleanFunction(func);
 };
 
 assign returns [int value=0]:
@@ -141,27 +164,36 @@ assign returns [int value=0]:
     }|
     ^(EXPR expression);
 
-assignment: ^(ASSIGN id=IDENTIFIER assign){
-    String address = addr((IdentifierNode)id);
+assignment:
+    ^(ASSIGN id=IDENTIFIER assign){
+        String address = addr((IdentifierNode)id);
 
-    if ($assign.value == 0){
-        // We can prevent instruction if we do not need to dereference pointers; we
-        // can directly store the result on the desired location
-        emitter.emit("STORE(1) " + address, $id.text);
-    } else {
-        // Load address of current identifier onto the stack
-        emitter.emit("LOADA " + address, $id.text);
+        if ($assign.value == 0){
+            // We can prevent instruction if we do not need to dereference pointers; we
+            // can directly store the result on the desired location
+            emitter.emit("STORE(1) " + address, $id.text);
+        } else {
+            // Load address of current identifier onto the stack
+            emitter.emit("LOADA " + address, $id.text);
 
-        // For each dereference (\%) found, load pointer which is the current
-        // pointer is pointing to (nice...)
-        for (int i=0; i < $assign.value; i++){
-            emitter.emit("LOADI (1)");
+            // For each dereference (\%) found, load pointer which is the current
+            // pointer is pointing to (nice...)
+            for (int i=0; i < $assign.value; i++){
+                emitter.emit("LOADI (1)");
+            }
+
+            // Pop address from stack and store results
+            emitter.emit("STOREI(1)");
         }
-
-        // Pop address from stack and store results
-        emitter.emit("STOREI(1)");
+    }|
+    ^(ASSIGN id=IDENTIFIER ^(GET value=assign index=expression)){
+        // 'expression' holding the amount of 
+        emitter.emit("LOADA " + addr((IdentifierNode)id));
+        emitter.emit("LOADI(1)", "First element of array " + id.getText());
+        emitter.emit("CALL add", "Plus N elements");
+        emitter.emit("STOREI(1)", "Store array value");
     }
-};
+;
 
 
 type: primitive_type | composite_type;
@@ -182,6 +214,17 @@ expression returns [CommonNode value]:
     | ^(DIVIDES x=expression y=expression){ emitter.emit("CALL div"); }
     | ^(MULTIPL x=expression y=expression){ emitter.emit("CALL mult"); }
     | ^(POWER x=expression y=expression)  { emitter.emit("CALL fockdeze"); }
+    | ^(AND x=expression y=expression)    {
+        emitter.emit("CALL add", "&&");
+        emitter.emit("LOADL 2", "&&");
+        emitter.emit("LOADL 1", "&&");
+        emitter.emit("CALL eq", "&&");
+    }
+    | ^(OR x=expression y=expression){
+        emitter.emit("CALL add", "||");
+        emitter.emit("LOADL 0", "||");
+        emitter.emit("CALL gt", "||"); 
+    }
     | ^(c=CALL<TypedNode> id=IDENTIFIER<IdentifierNode> expression_list?){
         IdentifierNode inode = (IdentifierNode)id;
         FunctionNode func = (FunctionNode)inode.getRealNode();
@@ -196,6 +239,13 @@ expression returns [CommonNode value]:
     }
     | ^(p=ASTERIX ex=expression){
         emitter.emit("LOADI(1)");
+    }
+    | ^(g=GET id=IDENTIFIER{
+        emitter.emit("LOADA " + addr((IdentifierNode)id), $id.text);
+        emitter.emit("LOADI(1)", "Resolve pointer to first element");
+    } index=expression){
+        emitter.emit("CALL (SB) get_from_array[CB]");
+
     }
     | operand {
         $value = $operand.value;

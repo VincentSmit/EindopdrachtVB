@@ -101,6 +101,7 @@ command:
     // solution but nonetheless a consciously chosen one.
     (IDENTIFIER ASSIGN) => assign_statement SEMICOLON! |
     (IDENTIFIER ASTERIX) => assign_statement SEMICOLON! |
+    (IDENTIFIER LBLOCK expression RBLOCK ASSIGN) => assign_statement SEMICOLON! |
     statement |
     declaration |
     expression SEMICOLON!|
@@ -184,10 +185,11 @@ import_statement
 
 assign:
     ASTERIX^ assign |
-    ASSIGN expression -> ^(EXPR expression);
+    ASSIGN expression -> ^(EXPR expression) |
+    LBLOCK expression RBLOCK a=assign -> ^(GET assign expression);
 
-assign_statement: IDENTIFIER assign
-                    -> ^(ASSIGN IDENTIFIER assign);
+assign_statement: 
+    IDENTIFIER assign -> ^(ASSIGN IDENTIFIER assign);
 
 print_statement: PRINT LPAREN expression RPAREN -> ^(PRINT expression);
 
@@ -212,6 +214,7 @@ expression_list: expression (COMMA! expression_list)?;
 raw_expression: TAM^ LPAREN! type COMMA! STRING_VALUE RPAREN!;
 call_expression: IDENTIFIER LPAREN expression_list? RPAREN
                      -> ^(CALL IDENTIFIER expression_list?);
+
 get_expression: IDENTIFIER LBLOCK expression RBLOCK
                     -> ^(GET IDENTIFIER expression);
 
@@ -247,7 +250,7 @@ primitive_type:
 
 composite_type:
     primitive_type LBLOCK expression RBLOCK
-        -> ^(ARRAY primitive_type expression);
+        -> ^(ARRAY primitive_type expression+);
 
 // Lexer rules
 IDENTIFIER: (LETTER | UNDERSCORE) (LETTER | DIGIT | UNDERSCORE)*;

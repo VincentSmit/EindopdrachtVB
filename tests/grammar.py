@@ -8,6 +8,19 @@ class GrammarTest(AntlrTest):
     def compile(self, grammar):
         return super(GrammarTest, self).compile(grammar, options=GRAMMAR_OPTS)
 
+    def test_array_lookup(self):
+        stdout, stderr = self.compile("a[3];")
+        self.assertEqual(stdout, "(PROGRAM (GET a 3))");
+
+    def test_array_assign(self):
+        stdout, stderr = self.compile("a[3] = 5;")
+        self.assertEqual(stdout, "(PROGRAM (ASSIGN a (GET (EXPR 5) 3)))");
+        
+    # TODO: Nested array declaration
+    def todo_test_nested_array(self):
+        stdout, stderr = self.compile(r"int[6][5] a;")
+        self.assertEqual(stdout, "(PROGRAM (VAR (ARRAY int 6 5) a))")
+
     def test_pointer_type(self):
         stdout, stderr = self.compile("func malloc(int size) returns %var{}")
         self.assertEqual(stdout, "(PROGRAM (func malloc (% var) (ARGS int size) BODY))")
@@ -18,10 +31,6 @@ class GrammarTest(AntlrTest):
 
         stdout, stderr = self.compile("import 'builtins/test'; print(2);")
         self.assertEqual(stdout, "(PROGRAM (PROGRAM (print 1)) (print 2))");
-
-    def test_array_lookup(self):
-        stdout, stderr = self.compile("a[3];")
-        self.assertEqual(stdout, "(PROGRAM (GET a 3))");
 
     def test_pointer_logic(self):
         stdout, stderr = self.compile("""
@@ -113,6 +122,7 @@ class GrammarTest(AntlrTest):
         stdout, stderr = self.compile(r"func foo(){}")
         self.assertEqual("(PROGRAM (func foo auto ARGS BODY))", stdout)
         self.assertEqual("", stderr)
+
 
     def test_array_literal(self):
         # This is wrong of course (types don't match), but we don't run a checker yet

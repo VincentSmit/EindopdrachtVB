@@ -12,6 +12,39 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
 
+    def test_array_declaration(self):
+        stdout, stderr = self.compile("int[3] a;")
+        self.assertIn("Could not find alloc()", stderr)
+
+        stdout, stderr = self.compile("import 'builtins/heap'; int['c'] a;")
+        self.assertIn("Expected Type<INTEGER> but found Type<CHARACTER>", stderr)
+
+        stdout, stderr = self.compile("import 'builtins/heap'; int[3] a;")
+        self.assertFalse(stderr)
+
+    def test_array_lookup(self):
+        stdout, stderr = self.compile("""
+            import 'builtins/heap';
+            int[3] a;
+            a[2];
+        """)
+        self.assertIn("Could not find get_from_array()", stderr)
+
+        stdout, stderr = self.compile("""
+            import 'builtins/heap';
+            import 'builtins/array';
+            int[3] a;
+            a['c'];
+        """)
+        self.assertIn("Expected Type<INTEGER> but found Type<CHARACTER>", stderr)
+
+        stdout, stderr = self.compile("""
+            import 'builtins/array';
+            int a;
+            a[3];
+        """)
+        self.assertIn("Expected array but found Type<INTEGER>", stderr)
+
     def test_variable_type(self):
         """We only accept variable types on assignments and function returns."""
         stdout, stderr = self.compile("func malloc(int size) returns %var{ return 6; }")
@@ -87,8 +120,7 @@ class CheckerTest(AntlrTest):
         self.assertFalse(stderr)
 
         stdout, stderr = self.compile("""auto[3] a = [1]; """)
-        self.assertIn("Setting 'a' to Type<ARRAY, Type<INTEGER>>", stdout)
-        self.assertFalse(stderr)
+        self.assertIn("Cannot assign value of Type<ARRAY, Type<INTEGER>> to variable of Type<ARRAY, Type<AUTO>>", stderr)
 
         stdout, stderr = self.compile("""auto x; auto[1] a = [x]; """)
         self.assertIn("Cannot assign AUTO types to an array of AUTO.", stderr)
