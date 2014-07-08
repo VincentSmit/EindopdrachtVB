@@ -10,11 +10,11 @@ class GrammarTest(AntlrTest):
 
     def test_array_lookup(self):
         stdout, stderr = self.compile("a[3];")
-        self.assertEqual(stdout, "(PROGRAM (GET a 3))");
+        self.assertEqual(stdout, "(PROGRAM (GET a 3))")
 
     def test_array_assign(self):
         stdout, stderr = self.compile("a[3] = 5;")
-        self.assertEqual(stdout, "(PROGRAM (ASSIGN a (GET (EXPR 5) 3)))");
+        self.assertEqual(stdout, "(PROGRAM (ASSIGN a (GET (EXPR 5) 3)))")
         
     # TODO: Nested array declaration
     def todo_test_nested_array(self):
@@ -22,12 +22,12 @@ class GrammarTest(AntlrTest):
         self.assertEqual(stdout, "(PROGRAM (VAR (ARRAY int 6 5) a))")
 
     def test_pointer_type(self):
-        stdout, stderr = self.compile("func malloc(int size) returns %var{}")
-        self.assertEqual(stdout, "(PROGRAM (func malloc (% var) (ARGS int size) BODY))")
+        stdout, stderr = self.compile("func malloc(int size) returns *var{}")
+        self.assertEqual(stdout, "(PROGRAM (func malloc (DEREFERENCE var) (ARGS int size) BODY))")
 
     def test_import(self):
         stdout, stderr = self.compile("import 'builtins/test';")
-        self.assertEqual(stdout, "(PROGRAM (PROGRAM (print 1)))");
+        self.assertEqual(stdout, "(PROGRAM (PROGRAM (print 1)))")
 
         stdout, stderr = self.compile("import 'builtins/test'; print(2);")
         self.assertEqual(stdout, "(PROGRAM (PROGRAM (print 1)) (print 2))");
@@ -35,15 +35,15 @@ class GrammarTest(AntlrTest):
     def test_pointer_logic(self):
         stdout, stderr = self.compile("""
             int  a;
-            %int b = &a;
+            *int b = &a;
             b = b + 1;
-            a = %(b - 1);
+            a = *(b - 1);
         """)
-        self.assertEqual("(PROGRAM (VAR int a) (VAR (% int) b) (ASSIGN b (EXPR (& a))) (ASSIGN b (EXPR (+ b 1))) (ASSIGN a (EXPR (% (- b 1)))))", stdout)
+        self.assertEqual("(PROGRAM (VAR int a) (VAR (DEREFERENCE int) b) (ASSIGN b (EXPR (& a))) (ASSIGN b (EXPR (+ b 1))) (ASSIGN a (EXPR (DEREFERENCE (- b 1)))))", stdout)
     
     def test_pointers(self):
-        stdout, stderr = self.compile("%%int a;")
-        self.assertEqual(stdout, "(PROGRAM (VAR (% (% int)) a))")
+        stdout, stderr = self.compile("**int a;")
+        self.assertEqual(stdout, "(PROGRAM (VAR (DEREFERENCE (DEREFERENCE int)) a))")
 
         stdout, stderr = self.compile("f(&a);")
         self.assertEqual(stdout, "(PROGRAM (CALL f (& a)))")
@@ -51,26 +51,26 @@ class GrammarTest(AntlrTest):
         stdout, stderr = self.compile("f(&&a);")
         self.assertTrue(stderr)
 
-        stdout, stderr = self.compile("f(%a);")
-        self.assertEqual(stdout, "(PROGRAM (CALL f (% a)))")
+        stdout, stderr = self.compile("f(*a);")
+        self.assertEqual(stdout, "(PROGRAM (CALL f (DEREFERENCE a)))")
 
-        stdout, stderr = self.compile("f(%%a);")
-        self.assertEqual(stdout, "(PROGRAM (CALL f (% (% a))))")
+        stdout, stderr = self.compile("f(**a);")
+        self.assertEqual(stdout, "(PROGRAM (CALL f (DEREFERENCE (DEREFERENCE a))))")
 
-        stdout, stderr = self.compile("func f(%int a) returns int{}")
+        stdout, stderr = self.compile("func f(*int a) returns int{}")
         self.assertFalse(stderr)
         
         return
         stdout, stderr = self.compile("""
             int a = 2;
-            %int b = &a;
-            b% = 5;
+            *int b = &a;
+            b* = 5;
         """)
         print(stdout)
-        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (EXPR 2)) (VAR (% int) b) (ASSIGN b (EXPR (& a))) (ASSIGN b (% (EXPR 5))))", stdout)
+        self.assertEqual("(PROGRAM (VAR int a) (ASSIGN a (EXPR 2)) (VAR (DEREFERENCE int) b) (ASSIGN b (EXPR (& a))) (ASSIGN b (DEREFERENCE (EXPR 5))))", stdout)
 
-        stdout, stderr = self.compile("b%%% = 4;");
-        self.assertEqual("(PROGRAM (ASSIGN b (% (% (% (EXPR 4))))))", stdout)
+        stdout, stderr = self.compile("b*** = 4;")
+        self.assertEqual("(PROGRAM (ASSIGN b (DEREFERENCE (DEREFERENCE (DEREFERENCE (EXPR 4))))))", stdout)
 
     def test_tam(self):
         stdout, stderr = self.compile("""

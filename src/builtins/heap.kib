@@ -6,8 +6,8 @@
 //
 // The caller is responsible for calling free on the returned pointer in order
 // to reclaim heap space.
-func alloc(int size) returns %var{
-    return __tam__(%var, '
+func alloc(int size) returns *var{
+    return __tam__(*var, '
                          LOAD(1) -1[LB]                ; Fetch size
                          LOADL 1                       ; Add one to size in order to store
                          CALL add                      ; ..it for a seq call to free
@@ -23,7 +23,7 @@ func alloc(int size) returns %var{
 }
 
 // Reclaim space once claimed with alloc()
-func free(%var p) returns int{
+func free(*var p) returns int{
     return __tam__(int, '
                          LOAD(1) -1[LB]                ; Fetch p
                          LOADL 1                       ; Substract one to access size

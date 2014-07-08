@@ -314,7 +314,7 @@ statement:
     assignment;
 
 assign:
-    ^(a=ASTERIX<TypedNode> as=assign){
+    ^(a=DEREFERENCE<TypedNode> as=assign){
         ((TypedNode)$a.tree).setExprType(new Type(
             Type.Primitive.POINTER, ((TypedNode)$as.tree).getExprType()
         ));
@@ -356,7 +356,7 @@ assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode>{
 });
 
 bool_op: AND | OR;
-same_op: PLUS | MINUS | DIVIDES | MULTIPL | POWER;
+same_op: PLUS | MINUS | DIVIDES | MULT | POWER;
 same_bool_op: LT | GT | LTE | GTE | EQ | NEQ;
 
 expression_list: expr=expression {
@@ -409,7 +409,7 @@ expression:
         TypedNode ext1 = (TypedNode)$ex1.tree;
 
         if(ext1.getExprType().getPrimType() == Type.Primitive.POINTER){
-            log("Warning: pointer arithmatic is unchecked logic.");
+            log("Warning: pointer arithmetic is unchecked logic.");
             ((TypedNode)$op.tree).setExprType(ext1.getExprType());
         } else {
             checkSameOp($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
@@ -422,7 +422,7 @@ expression:
     ^(tam=TAM<TypedNode> t=type STRING_VALUE){
         ((TypedNode)$tam.tree).setExprType(((TypedNode)$t.tree).getExprType());
     }|
-    ^(p=ASTERIX<TypedNode> ex=expression){
+    ^(p=DEREFERENCE<TypedNode> ex=expression){
         if(((TypedNode)$ex.tree).getExprType().getPrimType() != Type.Primitive.POINTER){
             reporter.error($ex.tree, "Cannot dereference non-pointer.");
         }
@@ -492,7 +492,7 @@ composite_type:
             reporter.error($size.tree, "Could not find alloc(). Did you import 'builtins/heap'?");
         }
     }|
-    ^(a=ASTERIX<TypedNode> t=type){
+    ^(a=DEREFERENCE<TypedNode> t=type){
         ((TypedNode)$a.tree).setExprType(new Type(
             Type.Primitive.POINTER, ((TypedNode)$t.tree).getExprType()
         ));

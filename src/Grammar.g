@@ -27,7 +27,7 @@ tokens {
     PLUS = '+';
     MINUS = '-';
     DIVIDES = '/';
-    MULTIPL = '*';
+    MULT = '*';
     POWER = '^';
     LT = '<';
     GT = '>';
@@ -41,7 +41,7 @@ tokens {
 
     // Pointers
     AMPERSAND = '&'; // Reference
-    ASTERIX = '%'; // Dereference
+    DEREFERENCE = '__dereference__node__';
 
     // keywords
     PROGRAM = 'program';
@@ -100,7 +100,7 @@ command:
     // which is its own horror. All in all, we think letting antlr figure it out on its own is not a clean
     // solution but nonetheless a consciously chosen one.
     (IDENTIFIER ASSIGN) => assign_statement SEMICOLON! |
-    (IDENTIFIER ASTERIX) => assign_statement SEMICOLON! |
+    (IDENTIFIER MULT* ASSIGN) => assign_statement SEMICOLON! |
     (IDENTIFIER LBLOCK expression RBLOCK ASSIGN) => assign_statement SEMICOLON! |
     statement |
     declaration |
@@ -184,7 +184,7 @@ import_statement
 ;
 
 assign:
-    ASTERIX^ assign |
+    MULT assign -> ^(DEREFERENCE assign) |
     ASSIGN expression -> ^(EXPR expression) |
     LBLOCK expression RBLOCK a=assign -> ^(GET assign expression);
 
@@ -207,7 +207,7 @@ expression:
 expressionAO: expressionLO (AND<TypedNode>^ expressionLO | OR<TypedNode>^ expressionLO)*;
 expressionLO: expressionPM ((LT<TypedNode>^ | GT<TypedNode>^ | LTE<TypedNode>^ | GTE<TypedNode>^ | EQ<TypedNode>^ | NEQ<TypedNode>^) expressionPM)*;
 expressionPM: expressionMD ((PLUS<TypedNode>^ | MINUS<TypedNode>^) expressionMD)*;
-expressionMD: expressionPW ((MULTIPL<TypedNode>^ | DIVIDES<TypedNode>^) expressionPW)*;
+expressionMD: expressionPW ((MULT<TypedNode>^ | DIVIDES<TypedNode>^) expressionPW)*;
 expressionPW: operand (POWER<TypedNode>^ operand)*;
 
 expression_list: expression (COMMA! expression_list)?;
@@ -221,9 +221,9 @@ get_expression: IDENTIFIER LBLOCK expression RBLOCK
 operand:
     (IDENTIFIER LBLOCK) => get_expression|
     (IDENTIFIER LPAREN) => call_expression|
-    (ASTERIX IDENTIFIER) => ASTERIX^ IDENTIFIER<IdentifierNode> |
+    (MULT IDENTIFIER) => DEREFERENCE^ IDENTIFIER<IdentifierNode> |
     AMPERSAND^ IDENTIFIER<IdentifierNode> |
-    ASTERIX^ operand |
+    MULT operand -> ^(DEREFERENCE operand) |
     LPAREN! expression RPAREN! |
     IDENTIFIER<IdentifierNode> |
     NUMBER<TypedNode> |
@@ -238,7 +238,7 @@ array_value_list: expression (COMMA! array_value_list)?;
 // Types
 type:
     (primitive_type LBLOCK) => composite_type |
-    ASTERIX type -> ^(ASTERIX type) |
+    MULT type -> ^(DEREFERENCE type) |
     primitive_type;
 
 primitive_type:

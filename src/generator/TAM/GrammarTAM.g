@@ -159,7 +159,7 @@ func_declaration: ^(FUNC id=IDENTIFIER {
 };
 
 assign returns [int value=0]:
-    ^(ASTERIX a=assign){
+    ^(DEREFERENCE a=assign){
         $value = $a.value + 1;
     }|
     ^(EXPR expression);
@@ -200,7 +200,7 @@ type: primitive_type | composite_type;
 primitive_type: INTEGER | BOOLEAN | CHARACTER | VAR;
 composite_type:
     ARRAY primitive_type expression |
-    ^(ASTERIX type);
+    ^(DEREFERENCE type);
 
 expression returns [CommonNode value]:
       ^(PLUS x=expression y=expression)   { emitter.emit("CALL add"); }
@@ -212,7 +212,7 @@ expression returns [CommonNode value]:
     | ^(EQ x=expression y=expression)     { emitter.emit("LOADL 1"); emitter.emit("CALL eq"); }
     | ^(NEQ x=expression y=expression)    { emitter.emit("LOADL 1"); emitter.emit("CALL ne"); }
     | ^(DIVIDES x=expression y=expression){ emitter.emit("CALL div"); }
-    | ^(MULTIPL x=expression y=expression){ emitter.emit("CALL mult"); }
+    | ^(MULT x=expression y=expression)   { emitter.emit("CALL mult"); }
     | ^(POWER x=expression y=expression)  { emitter.emit("CALL fockdeze"); }
     | ^(AND x=expression y=expression)    {
         emitter.emit("CALL add", "&&");
@@ -237,7 +237,7 @@ expression returns [CommonNode value]:
     | ^(a=AMPERSAND id=IDENTIFIER){
         emitter.emit(String.format("LOADA \%s", addr((IdentifierNode)id)), "\%" + $id.text);
     }
-    | ^(p=ASTERIX ex=expression){
+    | ^(p=DEREFERENCE ex=expression){
         emitter.emit("LOADI(1)");
     }
     | ^(g=GET id=IDENTIFIER{

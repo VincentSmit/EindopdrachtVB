@@ -12,6 +12,13 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
 
+    def test_pointer_logic(self):
+        stdout, stderr = self.compile("int a; *int b = &a; b = b + 1;")
+        self.assertIn("Warning: pointer arithmetic is unchecked logic.", stdout)
+
+        stdout, stderr = self.compile("int a; *int b = &a; b = 1 + b;")
+        self.assertIn("Expected operands to be of same type. Found: Type<INTEGER> and Type<POINTER, Type<INTEGER>>", stderr)
+
     def test_array_declaration(self):
         stdout, stderr = self.compile("int[3] a;")
         self.assertIn("Could not find alloc()", stderr)
@@ -47,22 +54,14 @@ class CheckerTest(AntlrTest):
 
     def test_variable_type(self):
         """We only accept variable types on assignments and function returns."""
-        stdout, stderr = self.compile("func malloc(int size) returns %var{ return 6; }")
+        stdout, stderr = self.compile("func malloc(int size) returns *var{ return 6; }")
         self.assertIn("Expected Type<POINTER, Type<VARIABLE>>, but got Type<INTEGER>.", stderr)
 
-        stdout, stderr = self.compile("func malloc(int size) returns %var{ return &size; }")
+        stdout, stderr = self.compile("func malloc(int size) returns *var{ return &size; }")
         self.assertFalse(stderr)
 
-        stdout, stderr = self.compile("%%var a;")
+        stdout, stderr = self.compile("**var a;")
         self.assertIn("Variable cannot have variable type.", stderr)
-
-    def test_pointer_logic(self):
-        stdout, stderr = self.compile("int a; %int b = &a; b = b + 1;")
-        self.assertIn("Warning: pointer arithmatic is unchecked logic.", stdout)
-
-        stdout, stderr = self.compile("int a; %int b = &a; b = 1 + b;")
-        self.assertIn("Expected operands to be of same type. Found: Type<INTEGER> and Type<POINTER, Type<INTEGER>>", stderr)
-
 
     def test_undefined(self):
         stdout, stderr = self.compile("print(a);")
@@ -75,18 +74,18 @@ class CheckerTest(AntlrTest):
         """)
         self.assertIn("Cannot assign value of Type<POINTER, Type<INTEGER>> to variable of Type<INTEGER>", stderr);
 
-        stdout, stderr = self.compile("int a = 3; %int b = &a; """)
-        self.assertFalse(stderr);
+        stdout, stderr = self.compile("int a = 3; *int b = &a; """)
+        self.assertFalse(stderr)
 
-        stdout, stderr = self.compile("int a = 3; print(%(&a));""")
-        self.assertFalse(stderr);
+        stdout, stderr = self.compile("int a = 3; print(*(&a));""")
+        self.assertFalse(stderr)
 
-        stdout, stderr = self.compile("int x = 5; print(%x);""")
+        stdout, stderr = self.compile("int x = 5; print(*x);""")
         self.assertIn("Cannot dereference non-pointer", stderr)
 
         stdout, stderr = self.compile("""
             int x = 5;
-            func test(%int a) returns int{
+            func test(*int a) returns int{
                 return 0;
             }
             print(&x);
@@ -95,34 +94,37 @@ class CheckerTest(AntlrTest):
 
         stdout, stderr = self.compile("""
             int x = 5;
-            %int y = &x;
-            %%int z = &y;
-            z% = 9;
+            *int y = &x;
+            **int z = &y;
+            z* = 9;
         """)
-        self.assertIn("Cannot assign value of Type<POINTER, Type<INTEGER>> to variable of Type<POINTER, Type<POINTER, Type<INTEGER>>>", stderr);
+        self.assertIn("Cannot assign value of Type<POINTER, Type<INTEGER>> to variable of Type<POINTER, Type<POINTER, Type<INTEGER>>>", stderr)
 
         stdout, stderr = self.compile("""
             int x = 5;
-            %int y = &x;
-            %%int z = &y;
-            z%% = 9;
+            *int y = &x;
+            **int z = &y;
+            z** = 9;
         """)
         self.assertFalse(stderr)
 
     def test_array_literal(self):
-        stdout, stderr = self.compile("""int[3] a = [1, 'c', 3]; """)
+        stdout, stderr = self.compile("""
+        import 'builtins/heap';
+        int[3] a = [1, 'c', 3];
+        """)
         self.assertIn("Elements of array must be of same type. Found: Type<CHARACTER>, expected Type<INTEGER>.", stderr)
 
-        stdout, stderr = self.compile("""char[3] a = [1, 2, 3]; """)
+        stdout, stderr = self.compile("""import 'builtins/heap'; char[3] a = [1, 2, 3]; """)
         self.assertIn("Cannot assign value of Type<ARRAY, Type<INTEGER>> to variable of Type<ARRAY, Type<CHARACTER>>.", stderr)
 
-        stdout, stderr = self.compile("""int[4] a = [1, 2, 3]; """)
+        stdout, stderr = self.compile("""import 'builtins/heap'; int[4] a = [1, 2, 3]; """)
         self.assertFalse(stderr)
 
-        stdout, stderr = self.compile("""auto[3] a = [1]; """)
+        stdout, stderr = self.compile("""import 'builtins/heap'; auto[3] a = [1];""")
         self.assertIn("Cannot assign value of Type<ARRAY, Type<INTEGER>> to variable of Type<ARRAY, Type<AUTO>>", stderr)
 
-        stdout, stderr = self.compile("""auto x; auto[1] a = [x]; """)
+        stdout, stderr = self.compile("""import 'builtins/heap'; auto x; auto[1] a = [x]; """)
         self.assertIn("Cannot assign AUTO types to an array of AUTO.", stderr)
 
     def test_relative_addresses(self):
@@ -180,6 +182,7 @@ class CheckerTest(AntlrTest):
 
     def test_memory_addresses(self):
         stdout, stderr = self.compile("""
+        import 'builtins/heap';
         int a;
         int b;
 
@@ -187,7 +190,6 @@ class CheckerTest(AntlrTest):
             int d;
             int[3] e;
         }""")
-
         self.assertIn("Set relative memory address of a to (0, 0)", stdout)
         self.assertIn("Set relative memory address of b to (0, 1)", stdout)
         self.assertIn("Set relative memory address of d to (1, 0)", stdout)
@@ -225,7 +227,12 @@ class CheckerTest(AntlrTest):
         stdout, stderr = self.compile("continue;")
         self.assertIn("'continue' outside loop.", stderr)
 
-        stdout, stderr = self.compile("int i;\nint[1] a;\nfor i in a{ continue; } \n")
+        stdout, stderr = self.compile("""
+            import 'builtins/heap';
+            int i;
+            int[1] a;
+            for i in a{ continue; }
+        """)
         self.assertFalse(stderr)
 
         # Don't know why you would use this syntax but hey..
@@ -236,7 +243,12 @@ class CheckerTest(AntlrTest):
         stdout, stderr = self.compile("break;")
         self.assertIn("'break' outside loop.", stderr)
 
-        stdout, stderr = self.compile("int i;\nint[1] a;\nfor i in a{ break; } \n")
+        stdout, stderr = self.compile("""
+            import 'builtins/heap';
+            int i;
+            int[1] a;
+            for i in a{ break; }
+        """)
         self.assertFalse(stderr)
 
         # Don't know why you would use this syntax but hey..
@@ -297,7 +309,7 @@ class CheckerTest(AntlrTest):
         stdout, stderr = self.compile("int a = 3; if(a){}")
         self.assertTrue("Expression must of be of type boolean. Found: Type<INTEGER>." in stderr)
 
-    def test_for(self):
+    def todo_test_for(self):
         stdout, stderr = self.compile("int a;\nfor a in a{}")
         self.assertTrue("Expression must be iterable. Found: Type<INTEGER>." in stderr)
 

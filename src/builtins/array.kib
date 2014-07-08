@@ -1,5 +1,5 @@
-func size_of_array(%var p) returns int{
-    int size = %(p - 1);
+func size_of_array(*var p) returns int{
+    int size = *(p - 1);
     return size - 1;
 }
 
@@ -8,10 +8,10 @@ func halt() returns int{
     return __tam__(int, 'HALT');
 }
 
-func get_from_array(%var p, int index) returns var{
-    // Only return if requested index lies between boundries of array
+func get_from_array(*var p, int index) returns var{
+    // Only return if requested index lies between boundaries of array
     if (index >= 0 && index < size_of_array(p)){
-        return %(p + index);
+        return *(p + index);
     }
     
     print('X');
