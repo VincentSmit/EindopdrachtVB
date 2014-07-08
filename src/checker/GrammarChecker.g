@@ -450,7 +450,6 @@ expression:
         }
         
         // Check for array type
-        System.out.println(inode.getExprType());
         if(inode.getExprType().getPrimType() != Type.Primitive.ARRAY){
             reporter.error($ex.tree, "Expected array but found " + inode.getExprType());
         }

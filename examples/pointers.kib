@@ -2,6 +2,6 @@ int a   = 3;
 *int b  = &a;
 **int c = &b;
 
+print(a);
 c** = 10;
-
 print(a);

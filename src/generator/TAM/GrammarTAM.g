@@ -12,88 +12,36 @@ options {
     import java.util.HashMap;
     import java.util.Stack;
     import java.util.List;
+
+    import generator.Utils;
 }
 
 @members {
     // Keep track of the 'current' function
-    private Stack<FunctionNode> funcs = new Stack<>();
+    protected Stack<FunctionNode> funcs = new Stack<>();
+    protected Emitter emitter = new Emitter();
+    protected Function funcUtil = new Function(this, emitter);
 
-    private Emitter emitter = new Emitter();
-
-    private void prepareFunction(FunctionNode f){
-        if(f.getMemAddr().getValue0() != 0){
-            // We're not the root note, so we need to make sure the TAM interpreter
-            // skips this function while executing the code.
-            emitter.emit(String.format("JUMP \%safter[CB]", f.getFullName()));
-        }
-
-        emitter.emitLabel(f.getFullName());
-        funcs.push(f);
-
-        if (f.getVars().size() > 0)
-            emitter.emit(String.format("PUSH \%s", f.getVars().size()));
-    }
-
-    private void cleanFunction(FunctionNode func){
-        // Deallocate all arrays. Yes, I know this is O(n) with n being the amount
-        // of variables in this function. We could keep an extra list for arrays
-        // only, but this is even uglier IMO.
-        for (TypedNode node : funcs.peek().getVars()){
-            if (node.getExprType().getPrimType() == Type.Primitive.ARRAY){
-                emitter.emit("LOADA " + addr((IdentifierNode)node), node.getText());                        
-                emitter.emit("LOADI(1)", "Load heap pointer to array"); 
-                emitter.emit("CALL (L1) free[CB]", "Freeeedooooooom"); 
-                emitter.emit("POP(1) 0", "Pop useless call result");
-            }
-        };
-
-        emitter.emitLabel(func.getFullName(), "after");
-        funcs.pop();
-    }
-
-    private String register(int diff, int lookupScopeLevel){
-        String base = "LB"; // Local base
-        if (diff == 6 || lookupScopeLevel == 0){
-            // Declared as global, so we need to fetch it from stack base
-            base = "SB";
-        } else if (diff > 0){
-            // Declared in one of enclosing functions, so we need to use
-            // pseudoregisters L1, L2 ... L6.
-            base = "L" + diff;
-        }
-
-        return base;
-    }
-
-    /*
-     * Determines memory address of given identifier (which might be a pointer,
-     * in case of an array).
+    /**
+     * Calls Utils.addr() with current call scope.
      *
-     * @return: String formatted as {offset:int}[{base:string}]
+     * @param inode: identifier to resolve address for.
      */
-    private String addr(IdentifierNode id){
-        int lookupScopeLevel = (Integer)funcs.peek().getMemAddr().getValue0();
-        int idScopeLevel = (Integer)id.getRealNode().getMemAddr().getValue0();
-        int diff = lookupScopeLevel - idScopeLevel;
-
-        String base = register(diff, lookupScopeLevel);
-
-        // Return offset[base]
-        return String.format("\%s[\%s]", id.getRealNode().getMemAddr().getValue1(), base);
+    protected String addr(IdentifierNode inode){
+        return Utils.addr(funcs.peek(), inode);
     }
 }
 
 program: ^(p=PROGRAM<FunctionNode> {
-    prepareFunction((FunctionNode)p);
+    funcUtil.enter((FunctionNode)p);
 } import_statement* command+){
-    cleanFunction((FunctionNode)p);
+    funcUtil.exit((FunctionNode)p);
     emitter.emit("HALT");
 };
     
 import_statement: ^(IMPORT from=IDENTIFIER imprt=IDENTIFIER);
 command: declaration | statement | expression{
-    int size = ($expression.value == null) ? 1 : $expression.value.getSize();
-    emitter.emit("POP(0) " + size, "Pop (unused) result of expression");
+    emitter.emit("POP(0) 1", "Pop (unused) result of expression");
 } | ^(PROGRAM command+);
 commands: command commands?;
 
@@ -153,9 +101,9 @@ argument: t=type id=IDENTIFIER<IdentifierNode>;
 
 func_declaration: ^(FUNC id=IDENTIFIER {
     FunctionNode func = (FunctionNode)id;
-    prepareFunction(func);
+    funcUtil.enter(func);
 } type ^(ARGS arguments?) ^(BODY commands?)){
-    cleanFunction(func);
+    funcUtil.exit(func);
 };
 
 assign returns [int value=0]:
@@ -218,13 +166,10 @@ expression returns [CommonNode value]:
     | ^(AND x=expression y=expression)    { emitter.emit("CALL and"); }
     | ^(OR x=expression y=expression)     { emitter.emit("CALL or"); }
     | ^(c=CALL<TypedNode> id=IDENTIFIER<IdentifierNode> expression_list?){
-        IdentifierNode inode = (IdentifierNode)id;
-        FunctionNode func = (FunctionNode)inode.getRealNode();
-        int funcLevel = (Integer)func.getMemAddr().getValue0() - 1;
-        int currentLevel = funcs.size() - 1;
-
-        String base = register(currentLevel - funcLevel, currentLevel);
-        emitter.emit(String.format("CALL (\%s) \%s[CB]", base, func.getFullName()));
+        FunctionNode func = (FunctionNode)((IdentifierNode)id).getRealNode();
+        emitter.emit(String.format("CALL (\%s) \%s[CB]",
+            Utils.register(funcs.peek(), func), func.getFullName()
+        ));
     }
     | ^(a=AMPERSAND id=IDENTIFIER){
         emitter.emit(String.format("LOADA \%s", addr((IdentifierNode)id)), "\%" + $id.text);
