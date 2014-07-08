@@ -341,6 +341,15 @@ Variable must be of same type as elements of iterable:
         stdout, stderr = self.compile("int a = 'c';")
         self.assertIn("Cannot assign value of Type<CHARACTER> to variable of Type<INTEGER>.", stderr)
 
+    def test_not(self):
+        stdout, stderr = self.compile("!false;")
+        self.assertFalse(stderr)
+
+        stdout, stderr = self.compile("!1;")
+        self.assertIn("Expected Type<BOOLEAN> but found Type<INTEGER>", stderr)
+
+
+
 if __name__ == '__main__':
     import unittest
     unittest.main()

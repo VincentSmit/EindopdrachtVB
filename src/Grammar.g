@@ -24,6 +24,7 @@ tokens {
     GET = 'get_expression';
 
     // operators
+    NOT = '!';
     PLUS = '+';
     MINUS = '-';
     DIVIDES = '/';
@@ -38,6 +39,7 @@ tokens {
     ASSIGN = '=';
     OR = '||';
     AND = '&&';
+    MOD = '%';
 
     // Pointers
     AMPERSAND = '&'; // Reference
@@ -207,7 +209,7 @@ expression:
 expressionAO: expressionLO (AND<TypedNode>^ expressionLO | OR<TypedNode>^ expressionLO)*;
 expressionLO: expressionPM ((LT<TypedNode>^ | GT<TypedNode>^ | LTE<TypedNode>^ | GTE<TypedNode>^ | EQ<TypedNode>^ | NEQ<TypedNode>^) expressionPM)*;
 expressionPM: expressionMD ((PLUS<TypedNode>^ | MINUS<TypedNode>^) expressionMD)*;
-expressionMD: expressionPW ((MULT<TypedNode>^ | DIVIDES<TypedNode>^) expressionPW)*;
+expressionMD: expressionPW ((MULT<TypedNode>^ | DIVIDES<TypedNode>^ | MOD<TypedNode>^) expressionPW)*;
 expressionPW: operand (POWER<TypedNode>^ operand)*;
 
 expression_list: expression (COMMA! expression_list)?;
@@ -222,9 +224,19 @@ operand:
     (IDENTIFIER LBLOCK) => get_expression|
     (IDENTIFIER LPAREN) => call_expression|
     (MULT IDENTIFIER) => DEREFERENCE^ IDENTIFIER<IdentifierNode> |
+
+    // NOT
+    NOT^ operand |
+
+    // Reference
     AMPERSAND^ IDENTIFIER<IdentifierNode> |
+    // Dereference
     MULT operand -> ^(DEREFERENCE operand) |
+
+    // Parentheses
     LPAREN! expression RPAREN! |
+
+    // Primitive types
     IDENTIFIER<IdentifierNode> |
     NUMBER<TypedNode> |
     STRING_VALUE<TypedNode>|

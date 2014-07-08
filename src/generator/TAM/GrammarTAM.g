@@ -213,18 +213,10 @@ expression returns [CommonNode value]:
     | ^(NEQ x=expression y=expression)    { emitter.emit("LOADL 1"); emitter.emit("CALL ne"); }
     | ^(DIVIDES x=expression y=expression){ emitter.emit("CALL div"); }
     | ^(MULT x=expression y=expression)   { emitter.emit("CALL mult"); }
+    | ^(MOD x=expression y=expression)    { emitter.emit("CALL mod"); }
     | ^(POWER x=expression y=expression)  { emitter.emit("CALL fockdeze"); }
-    | ^(AND x=expression y=expression)    {
-        emitter.emit("CALL add", "&&");
-        emitter.emit("LOADL 2", "&&");
-        emitter.emit("LOADL 1", "&&");
-        emitter.emit("CALL eq", "&&");
-    }
-    | ^(OR x=expression y=expression){
-        emitter.emit("CALL add", "||");
-        emitter.emit("LOADL 0", "||");
-        emitter.emit("CALL gt", "||"); 
-    }
+    | ^(AND x=expression y=expression)    { emitter.emit("CALL and"); }
+    | ^(OR x=expression y=expression)     { emitter.emit("CALL or"); }
     | ^(c=CALL<TypedNode> id=IDENTIFIER<IdentifierNode> expression_list?){
         IdentifierNode inode = (IdentifierNode)id;
         FunctionNode func = (FunctionNode)inode.getRealNode();
@@ -245,7 +237,9 @@ expression returns [CommonNode value]:
         emitter.emit("LOADI(1)", "Resolve pointer to first element");
     } index=expression){
         emitter.emit("CALL (SB) get_from_array[CB]");
-
+    }
+    | ^(n=NOT ex=expression){
+        emitter.emit("CALL not");
     }
     | operand {
         $value = $operand.value;
@@ -270,6 +264,5 @@ operand returns [CommonNode value]:
     } |
     ^(TAM type s=STRING_VALUE){
         emitter.emit($s.text.substring(1, $s.text.length() - 1).trim());
-    }
-    ;
+    };
 

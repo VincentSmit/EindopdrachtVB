@@ -196,6 +196,10 @@ class GrammarTest(AntlrTest):
         stdout, stderr = self.compile("""char a = 'ab\nc';""")
         self.assertEqual(stdout, "(PROGRAM (VAR char a) (ASSIGN a (EXPR 'ab\nc')))")
 
+    def test_not(self):
+        stdout, stderr = self.compile("""!true;""")
+        self.assertEqual(stdout, "(PROGRAM (! true))")
+
     # INVALID PROGRAMS
 
 

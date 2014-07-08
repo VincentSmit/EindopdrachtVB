@@ -356,7 +356,7 @@ assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode>{
 });
 
 bool_op: AND | OR;
-same_op: PLUS | MINUS | DIVIDES | MULT | POWER;
+same_op: PLUS | MINUS | DIVIDES | MULT | POWER | MOD;
 same_bool_op: LT | GT | LTE | GTE | EQ | NEQ;
 
 expression_list: expr=expression {
@@ -462,6 +462,12 @@ expression:
         if(!ext.getExprType().equals(Type.Primitive.INTEGER)){
             reporter.error($ex.tree, "Expected Type<INTEGER> but found " + ext.getExprType());
         }
+    }|
+    ^(n=NOT<TypedNode> ex=expression){
+        TypedNode ext = (TypedNode)$ex.tree;
+        if(ext.getExprType().getPrimType() != Type.Primitive.BOOLEAN){
+            reporter.error($ex.tree, "Expected Type<BOOLEAN> but found " + ext.getExprType());
+        }
     };
 
 type:
@@ -473,7 +479,7 @@ primitive_type:
     b=BOOLEAN<TypedNode>    { ((TypedNode)$b.tree).setExprType(Type.Primitive.BOOLEAN); }|
     c=CHARACTER<TypedNode>  { ((TypedNode)$c.tree).setExprType(Type.Primitive.CHARACTER); }|
     a=AUTO<TypedNode>       { ((TypedNode)$a.tree).setExprType(Type.Primitive.AUTO); }|
-    v=VAR<TypedNode>   { ((TypedNode)$v.tree).setExprType(Type.Primitive.VARIABLE); };
+    v=VAR<TypedNode>        { ((TypedNode)$v.tree).setExprType(Type.Primitive.VARIABLE); };
 
 composite_type:
     ^(arr=ARRAY<TypedNode> t=primitive_type size=expression){
