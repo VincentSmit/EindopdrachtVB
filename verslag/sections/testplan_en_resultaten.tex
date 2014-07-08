@@ -2,15 +2,33 @@
 \label{cha:testplan_en_resultaten}
 Om de juistheid van de compiler te garanderen, is testen essentieel. Hiertoe zijn dan ook twee typen tests geschreven. De eerste is een in \emph{python} geschreven programma, welke de syntax en context test. Het tweede type bestaat uit grotere voorbeeldprogramma's, welke syntax, context en semantiek testen.
 
-\section{Testen} % (fold)
-\label{sec:testen}
+De testprogramma's geschreven in \emph{python} zijn te vinden in het bijgeleverde zip-bestand in de map \emph{tests}. De testprogramma's uit onze eigen taal in de map \emph{examples}.
 
-% section testen (end)
+\section{Python programma's} % (fold)
+\label{sec:python_programma_s}
+De python programma's testen zeer snel en effici\"ent de volledige syntax en context. Hieronder vallen zowel correcte als foute code. Als de code bewust fout gaat, wordt dit afgevangen op de correcte foutmelding. 
 
-\section{Resultaten} % (fold)
-\label{sec:resultaten}
+Als al deze tests slagen is er geen noemenswaardige output. Mocht er een test wel falen, dan wordt dit getoond op de standaard output.
+% section python_programma_s (end)
 
-% section resultaten (end)
+\section{Testprogramma's} % (fold)
+\label{sec:testprogramma_s}
+
+Verder wordt het volgende getest in deze correcte testprogramma's. Al deze programma's werken en leveren dus geen noemenswaardige resultaten op.
+\begin{description}
+    \item[array.kib] Het declareren van, toewijzen van waarden aan, en uitlezen van een array.
+    \item[fibonacci\_recursive.kib, power.kib] Het declareren en gebruik van een functie.
+    \item[heap.kib] Het alloceren en vrijgeven van geheugen wordt hier getest. 
+    \item[pointers.kib] Test de declaratie en het gebruik van pointers.
+    \item[raw.kib] Ja, uh, wat??
+\end{description}
+
+Het volgende wordt gestest op fouten, met incorrecte testprogramma's. Deze program"ma's leveren ook de bijgeschreven output.
+\begin{description}
+    %here be wrong programs
+    \item[] 
+\end{description}
+% section testprogramma_s (end)
 
 % chapter testplan_en_resultaten (end)
 \clearpage
