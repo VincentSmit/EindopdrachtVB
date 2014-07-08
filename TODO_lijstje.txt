@@ -1,0 +1,16 @@
+TODO lijstje VB
+
+Code
+    - documentatie
+    - ?
+
+Verslag
+    O Inleiding (als laatste te schrijven, bewust open)
+    F Taalbeschrijving (Af, hooguit uit te breiden)
+    L Problemen (Uitwerken huidige, eventueel nieuwe bedenken, max 2 pagina's)
+    F syntax enz. (Check of er niets vergeten ben. Basis klopt maar misschien mis ik nieuwe functionaliteit)
+    L Vertaalregels (Moet nog digitaal, groot deel al wel op papier)
+    F Java (Doorkijken aub, verder af)
+    L testplan (Meer testprogramma's schrijven en documenteren)
+    O Conclusie (als laatste, voor de inleiding, bewust open)
+    L Appendix (lexer af, checken. (Tree)parser specificatie toevoegen. Uitgebreid testprogramma maken en output hier neergooien.)
