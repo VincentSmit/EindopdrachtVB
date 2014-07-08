@@ -1,0 +1,9 @@
+import 'builtins/array';
+import 'builtins/heap';
+import 'builtins/read';
+
+int[2] ints;
+read_int_array(ints);
+
+print(ints[0]);
+print(ints[1]);

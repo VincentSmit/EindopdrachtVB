@@ -75,7 +75,7 @@ public class Type {
 
     /*
      * Test Type objects for equality. Objects with type AUTO are never
-     * equal. This is a convinience method, wrapping the passed primitive
+     * equal. This is a convenience method, wrapping the passed primitive
      * object into a Type.
      *
      * @param other: type to compare with
@@ -97,7 +97,9 @@ public class Type {
         // Are primitive types equal?
         boolean primEqual = this.primType != Primitive.AUTO &&
                             other.primType != Primitive.AUTO &&
-                            this.primType == other.primType;
+                            (this.primType == other.primType ||
+                             (this.primType == Primitive.ARRAY && other.primType == Primitive.POINTER) ||
+                             (this.primType == Primitive.POINTER && other.primType == Primitive.ARRAY));
 
         // If one of arguments has variable as pritimive type, accept it
         // but only if acceptVar flag is set.

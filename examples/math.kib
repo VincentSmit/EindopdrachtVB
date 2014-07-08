@@ -1,0 +1,4 @@
+import 'builtins/math';
+
+int a = power(2, 7) + 7 % 2;
+print(a);

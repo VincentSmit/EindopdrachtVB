@@ -1,0 +1,11 @@
+func power(int b, int e) returns int{
+    int res = b;
+
+    while(e > 1){
+        res = res * b;
+        e = e - 1;
+    }
+
+    return res;
+}
+

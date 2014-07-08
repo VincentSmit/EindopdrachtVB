@@ -12,6 +12,18 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
 
+    def test_array_to_pointer(self):
+        stdout, stderr = self.compile("""
+            import 'builtins/heap';
+
+            int[1] tmp;
+            func a(*int p) returns int{
+                return 1;
+            }
+            a(tmp);
+        """)
+        self.assertFalse(stderr)
+
     def test_pointer_logic(self):
         stdout, stderr = self.compile("int a; *int b = &a; b = b + 1;")
         self.assertIn("Warning: pointer arithmetic is unchecked logic.", stdout)
@@ -347,7 +359,6 @@ Variable must be of same type as elements of iterable:
 
         stdout, stderr = self.compile("!1;")
         self.assertIn("Expected Type<BOOLEAN> but found Type<INTEGER>", stderr)
-
 
 
 if __name__ == '__main__':

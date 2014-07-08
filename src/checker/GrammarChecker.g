@@ -356,7 +356,7 @@ assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode>{
 });
 
 bool_op: AND | OR;
-same_op: PLUS | MINUS | DIVIDES | MULT | POWER | MOD;
+same_op: PLUS | MINUS | DIVIDES | MULT | MOD;
 same_bool_op: LT | GT | LTE | GTE | EQ | NEQ;
 
 expression_list: expr=expression {
@@ -468,6 +468,17 @@ expression:
         if(ext.getExprType().getPrimType() != Type.Primitive.BOOLEAN){
             reporter.error($ex.tree, "Expected Type<BOOLEAN> but found " + ext.getExprType());
         }
+    }|
+    ^(p=POWER<TypedNode> base=expression power=expression){
+        TypedNode pt = (TypedNode)$p.tree;
+        TypedNode baset = (TypedNode)$base.tree;
+        TypedNode powert = (TypedNode)$power.tree;
+        checkSameOp(pt, baset, powert);
+
+        if(symtab.retrieve("power") == null){
+            reporter.error(pt, "Could not find power(). Did you import 'builtins/math'?");
+        }
+
     };
 
 type:
