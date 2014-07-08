@@ -1,5 +1,36 @@
 \chapter{Java programmatuur} % (fold)
 \label{cha:java_programmatuur}
+Voor het correct laten werken van de KIDEB-compiler zijn een aantal extra Java-klassen gedefinieerd. Deze betreffen het opbouwen van de \emph{symbol table}, code voor het checken van types en de extra nodes voor de AST. Ook valt hieronder een stukje foutafhandeling.
+
+\section{Symbol table} % (fold)
+\label{sec:symbol_table}
+De zogenaamde \emph{symbol table} zoekt uit welke variabele waar gedefinieerd is, waar deze gebruikt wordt en koppelt dit aan elkaar. De reeds gemaakte \emph{symbol table} uit het practicum van vertalerbouw is hiervoor gebruikt. 
+% section symbol_table (end)
+
+\section{Type checking} % (fold)
+\label{sec:type_checking}
+Voor het verwerken van types is het de klasse Type aangemaakt. Deze klasse bevat een enumerator van alle types die onze taal kent. Deze klasse wordt gebruikt voor het zetten van de types van de identifiers.
+% section type_checking (end)
+
+\section{AST klassen} % (fold)
+\label{sec:ast_klassen}
+De AST is uitgebreid met extra nodes, om extra benodigde informatie bij te houden. 
+
+De abstracte klasse \emph{AbstractNode} is een subklasse van CommonTree, de normale AST-klasse. Deze vormt de superklasse voor de klasse CommonNode. Deze laatste is de superklasse voor alle zelf-gedefinieerde AST-nodes. De node van het import-statement is een instantie van deze klasse, want, JA< WAAROM??
+
+De klasse ControlNode representeert nodes die de uitvoervolgorde van het programma veranderen. Hieronder vallen onder andere het return-, continue- en break-statement. Deze klasse houdt de scope bij waar het statement bij hoort. Deze klasse is een subklasse van CommonNode. 
+
+Een andere subklasse van CommonNode is de klasse TypedNode. Deze klasse vormt de superklasse van alle nodes in de AST die van een bepaald type zijn. Daarom heeft deze klasse als eigenschap een type. Tevens is het geheugenadres van deze (VAN DEZE WAT??) een eigenschap.
+
+Onder de TypedNode komt de IdentifierNode. Deze node wordt gebruikt om de scope van een identifier te bepalen, evenals zijn type. Als eigenschap heeft deze klasse een zogenaamde \emph{realNode}. Deze \emph{realNode} is de node waar de declaratie van deze identifier plaatsvindt en er wordt bij gebruik van de identifier naar verwezen.
+
+Het laagst in de hi\"erarchie zit de FunctionNode. Deze node wordt vanzelfsprekend gebruikt voor functies en houdt een lijst van identifiers en bijbehorende types bij. Deze lijst is dus de lijst met argument. Tevens heeft deze node een naam en returnType als eigenschap.
+% section ast_klassen (end)
+
+\section{Foutafhandeling} % (fold)
+\label{sec:foutafhandeling}
+Om compilatie af te breken bij een typefout, is de InvalidTypeException-klasse ge\"implementeerd. Deze exceptie wordt gegooid bij een declaratie, als het gedeclareerde type niet bestaat. Tevens wordt deze exceptie gegooid als er verkeerde types in expressies gebruikt worden.
+% section foutafhandeling (end)
 
 % chapter java_programmatuur (end)
 \clearpage
