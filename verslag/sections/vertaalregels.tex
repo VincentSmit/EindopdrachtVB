@@ -41,8 +41,44 @@ Dit leidt tot de volgende commando's.
 
 De statements gaan als volgt.
 \begin{description}
-    \item[execute [[I = E;]]] 
+    \item[execute [[I = E;]]] \hfill \\
+        evaluate E \\
+        assign I
+    \item[execute [[if E then C\textsubscript{1} else C\textsubscript{2}]]] = \hfill \\
+        \begin{tabular}{c l}
+            &evaluate E \\
+            &JUMPIF(0) \emph{g} \\
+            &execute C\textsubscript{1} \\
+            &JUMP \emph{h} \\
+    \emph{g:}&gexecute C\textsubscript{2} \\
+    \emph{h:}& \\
+        \end{tabular}
+    \item[execute [[while E then C]]] = \hfill \\
+        \begin{tabular}{c l}
+            &JUMP \emph{h} \\
+    \emph{g:}&execute C \\
+    \emph{h:}&evaluate E \\
+            &JUMPIF(1) \emph{g} \\
+        \end{tabular} 
+    \item[execute [[return E]]]  = \hfill \\
+        here be returns
+    \item[execute [[import SW]]] = \hfill \\ 
+        here be imports
+    \item[execute [[print E]]] = \hfill \\
+        evaluate E \\
+        CALL put \\
+        \itab{LOADL 10}\stab{newline} \\
+        CALL putint
+\end{description}
 
+De expressie worden als volgt vewerkt.
+\begin{description}
+    \item[evaluate [[E\textsubscript{1} O E\textsubscript{2}]]] = \hfill \\
+        evaluate E\textsubscript{1} \\
+        evaluate E\textsubscript{2} \\
+        \itab{CALL p}\stab{p is het adres van de primitieve routine die hoort bij O}
+    \item[evaluate [[]]] = \hfill \\
+        tja
 \end{description}
 % chapter vertaalregels (end)
 \clearpage
