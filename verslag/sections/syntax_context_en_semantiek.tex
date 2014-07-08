@@ -13,11 +13,12 @@ De terminale symbolen:
     \item \itab{"}\stab{+}\stab{-}\stab{/}\stab{\textless}
     \item \itab{\^}\stab{=}\stab{\textless}\stab{\textgreater}\stab{\textgreater =}
     \item \itab{!}\stab{\textless =}\stab{==}\stab{\textbar \textbar}\stab{\&\&}
+    \item \itab{\&}\stab{\%}\stab{print}\stab{import}\stab{call}
     \item \itab{swap}\stab{if}\stab{else}\stab{then}\stab{do}
     \item \itab{while}\stab{from}\stab{break}\stab{continue}\stab{return}
     \item \itab{for}\stab{in}\stab{returns}\stab{func}\stab{array}
     \item \itab{args}\stab{var}\stab{of}\stab{int}\stab{bool}
-    \item \itab{char}\stab{call}
+    \item \itab{char}
 \end{description}
 % subsection terminale_symbolen (end)
 
@@ -29,10 +30,11 @@ De non-terminale symbolen:
 \begin{description}
     \item[program (startsymbool)] 
     \item[command]
-    \item[declaration] \hfill \\
+    \item[declaration] IDENTIFIER\hfill \\
         var\_declaration \\
         scope\_declaration \\
-        func\_declaration
+        func\_declaration \\
+        assign\_statement
     \item[assignment] \hfill \\
         var\_assignment
     \item[argument] \hfill \\
@@ -44,7 +46,9 @@ De non-terminale symbolen:
         else\_part \\
         for\_statement \\
         return\_statement \\
-        assign\_statement
+        assign\_statement \\
+        print\_statement \\
+        import\_statement
     \item[expression] \hfill \\
         expressionAO \\
         expressionLO \\
@@ -52,7 +56,7 @@ De non-terminale symbolen:
         expressionMD \\
         expressionPW \\
         expression\_list \\
-        call\_expression
+        call\_expression \\
         operand \\
         array\_literal \\
         array\_value\_list
@@ -99,6 +103,7 @@ De non-terminale symbolen:
         while\_statement \textbar \\
         for\_statement \textbar \\
         return\_statement \textbar \\
+        import\_statement \textbar \\
         BREAK SEMICOLON \textbar \\
         CONTINUE SEMICOLON;
     \item[if\_statement] := \hfill \\
@@ -113,8 +118,12 @@ De non-terminale symbolen:
         FOR LPAREN expression RPAREN LCURLY commands? RCURLY;
     \item[return\_statement] := \hfill \\
         RETURN expression SEMICOLON;
+    \item[print\_statement] := \hfill \\
+        PRINT LPAREN expression RPAREN; 
+    \item[import\_statement] := \hfill \\
+        IMPORT STRING\_VALUE; 
     \item[expression] := \hfill \\
-        call\_expression \textbar \\
+        raw\_expression \textbar \\
         expressionAO \textbar \\
         array\_literal;
     \item[expressionAO] := \hfill \\
@@ -131,7 +140,14 @@ De non-terminale symbolen:
         expression (COMMA expression\_list)?;
     \item[call\_expression] := \hfill \\
         IDENTIFIER LPAREN expression\_list? RPAREN;
+    \item[get\_expression] := \hfill \\
+        IDENTIFIER LBLOCK expression RBLOCK; 
     \item[operand \\] := \hfill \\
+        get\_expression \textbar \\
+        call\_expression \textbar \\
+        ASTERIX operand \textbar \\
+        AMPERSAND IDENTIFIER \textbar \\
+        ASTERIX operand \textbar \\
         LPAREN expression RPAREN \textbar \\
         IDENTIFIER \textbar \\
         NUMBER \textbar \\
@@ -151,11 +167,12 @@ De non-terminale symbolen:
         INTEGER \textbar \\
         BOOLEAN \textbar \\
         CHARACTER \textbar \\
-        AUTO;
+        AUTO \textbar \\
+        VAR;
     \item[composite\_type] := \hfill \\
         primitive\_type LBLOCK expression RBLOCK
     \item[IDENTIFIER] := \hfill \\
-        LETTER (LETTER \textbar DIGIT);
+        (LETTER \textbar UNDERSCORE) (LETTER \textbar DIGIT \textbar UNDERSCORE);
     \item[NUMBER] := \hfill \\
         DIGIT+;
     \item[STRING\_VALUE] := \hfill \\
@@ -172,6 +189,8 @@ De non-terminale symbolen:
         a..z;
     \item[UPPER] := \hfill \\
         A..Z;
+    \item[UNDERSCORE] := \hfill \\
+        \_; 
 \end{description}
 % subsection productieregels (end)
 % section syntax (end)
@@ -230,6 +249,35 @@ Voor de statements gelden de volgende regels.\\
 
 \section{Semantiek} % (fold)
 \label{sec:semantiek}
+Deze sectie bespreekt de semantiek, ofwel de betekenis van de geschreven code.
+
+Een \emph{statement S} wordt uitgevoerd om de variabelen te updaten. Dit is inclusief input en output.
+\begin{itemize}
+    \item Assign-statment(I = E): Expressie E wordt gevalueerd en levert de waarde \emph{v} op. Deze waarde wordt gekoppeld aan I.
+    \item Import-statment(import SW): Van stringwaarde SV wordt uitgezocht of het bestaat als .kib broncode bestand. Zo ja, wordt de AST van het porgramma uitgebreid met de AST van dit bestand en is de code uit dit bestand beschikbaar voor gebruik in de eigen brongcode.
+    \item If-statement(if E then C\textsubscript{1} else C\textsubscript{2}): Expressie E wordt ge\"evalueerd en levert een booleanwaarde op. Als de boolean waarde \texttt{true} is, worden commando's C\textsubscript{1} uitgevoerd, anders commando's C\textsubscript{2}. 
+    \item While-statement(while E do C): Expressie E wordt gevalueerd en levert een booleanwaarde op. Als de booleanwaarde \texttt{true} is, wordt commando C uitgevoerd. Daarna wordt E opnieuw gevalueerd. Is de booleanwaarde \texttt{false}, dan eindigt de loop.
+    \item For-statement(for I in E C): Zolang expressie E true geeft met de gegeven identifier I, wordt commando C uitgevoerd.
+    \item Print-statement(print(E)): De expressie E wordt gevalueerd en levert waarde \emph{v} op. Deze waarde \emph{v} wordt op de standaard output getoond.
+\end{itemize}
+
+Een \emph{expressie E} levert een waarde op na evaluatie.
+\begin{itemize}
+    \item expressionAO(E\textsubscript{1} operator E\textsubscript{2}): Evalueert expressie E\textsubscript{1} en E\textsubscript{2}, welke beiden een boolean opleveren. De waarde die de expressie AO oplevert is ook een boolean, met als operator de binaire AND(\&\&) of OR(\textbar\textbar).
+    \item expressionLO(E\textsubscript{1} operator E\textsubscript{2}): Evalueert expressie E\textsubscript{1} en E\textsubscript{2}, welke beiden een integer opleveren. De waarde die de expressie LO oplevert is een boolean, met als operator een waarde vergelijker.
+    \item expressionPM(E\textsubscript{1} operator E\textsubscript{2}): Evalueert expressie E\textsubscript{1} en E\textsubscript{2}, welke beiden een integer opleveren. De waarde die de expressie AO oplevert is de opgetelde of afgetrokken waarde van beide expressies.
+    \item expressionMD(E\textsubscript{1} operator E\textsubscript{2}): Evalueert expressie E\textsubscript{1} en E\textsubscript{2}, welke beiden een integer opleveren. De waarde die de expressie AO oplevert is de vermenigvuldigde of gedeelde waarde van beide expressies.
+    \item expressionPW(E\textsubscript{1} operator E\textsubscript{2}): Evalueert expressie E\textsubscript{1} en E\textsubscript{2}, welke beiden een integer opleveren. De waarde die de expressie AO oplevert is E\textsubscript{1} tot de macht E\textsubscript{2}.
+    \item raw-expressie(\_\_tam\_\_ (type, SW)): JA, wat doet dit eigenlijk.
+    \item call-expressie(I(E\textsubscript{1},\dots E\textsubscript{x})): Evalueert expressie E\textsubscript{1} tot en met E\textsubscript{x} en leveren waarden v\textsubscript{1} tot en met v\textsubscript{x} op. Functie I wordt vervolgens aangeroepen met argumenten v\textsubscript{1} tot en met v\textsubscript{x}.
+    \item get-expressie(get I E): JA, wat doet dit eigenlijk.
+\end{itemize}
+
+Een \emph{delclaratie D} wordt uitgevoerd om bindingen te maken. 
+\begin{itemize}
+    \item Variabele declaratie(T I): Identifier I wordt gebonden aan een waarde, die op dit moment nog onbekend is. De waarde moet gelijk zijn aan type T. De variabele wordt buiten de scope waarin deze wordt gebruikt, gedealloceerd.
+    \item Functie declaratie(func I(ARGS) returns T\{C\}): Functie met identifier I wordt aangemaakt. De argumenten ARGS stellen de waarden voor die de functie in de aanroep ervan mee moet krijgen. Type T is het type van de return-waarde van functie I. Commando C vormt de body van de functie en dit zijn de commando's die uitgevoerd worden na aanroep van deze functie.
+\end{itemize}
 
 % section semantiek (end)
 

@@ -19,6 +19,8 @@ Tekens
     \item \itab{DOUBLE\_QUOTE} \tab{"}
     \item \itab{SINGLE\_QUOTE} \tab{\textbackslash}
     \item \itab{BODY}       \tab{body}
+    \item \itab{EXPR}       \tab{assignment\_expression}
+    \item \itab{GET}        \tab{get\_expression}
 \end{description}
 
 \clearpage
@@ -40,6 +42,13 @@ Operators
     \item \itab{ASSIGN}     \tab{==}
     \item \itab{OR}         \tab{\textbar \textbar}
     \item \itab{AND}        \tab{\&\&}
+\end{description}
+
+Pointers
+\begin{description}
+    \item \itab{Token}      \tab{teken}
+    \item \itab{AMPERSAND}  \tab{\&}
+    \item \itab{ASTERIX}    \tab{\%}
 \end{description}
 
 \clearpage
@@ -65,8 +74,11 @@ Keywords van KIDEB
     \item \itab{FUNC}       \tab{func}
     \item \itab{ARRAY}      \tab{array}
     \item \itab{ARGS}       \tab{args}
+    \item \itab{CALL}       \tab{call}
     \item \itab{VAR}        \tab{var}
     \item \itab{OF}         \tab{of}
+    \item \itab{PRINT}      \tab{print}
+    \item \itab{TAM}        \tab{\_\_tam\_\_}
 \end{description}
 
 \clearpage
@@ -77,7 +89,7 @@ Standaard types
     \item \itab{INTEGER}    \tab{int}
     \item \itab{CHARACTER}  \tab{char}
     \item \itab{BOOLEAN}    \tab{bool}
-    \item \itab{CALL}       \tab{call}
+    \item \itab{AUTO}       \tab{auto}
 \end{description}
 % section lexer_specificatie (end)
 
