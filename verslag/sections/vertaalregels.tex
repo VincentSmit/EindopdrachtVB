@@ -8,7 +8,9 @@ Om de vertaalregels van de broncode naar TAM-code duidelijk te maken, worden cod
     \hline
     Program & \emph{run P} & Draai programma P en daarna stoppen. Beginnen en eindigen met een lege stack. \\
     \hline
-    Statement & \emph{execute E} & Voer het statement S uit met mogelijk aanpassen van variabelen, maar zonder effect op de stack. \\
+    Commando & \emph{do C} & Is de volledige lijst met instructies, bestaande uit statements, expressies en declaraties. \\
+    \hline
+    Statement & \emph{execute S} & Voer het statement S uit met mogelijk aanpassen van variabelen, maar zonder effect op de stack. \\
     \hline
     Expressie & \emph{evaluate E} & Evalueer de expressie E en push het reultaat naar de stack. Geen verder effect op de stack. \\
     \hline
@@ -16,21 +18,31 @@ Om de vertaalregels van de broncode naar TAM-code duidelijk te maken, worden cod
     \hline
     Identifier & \emph{assign I} & Pop een waarde van de stack en sla deze op in variabele I. \\
     \hline
-    Declaration & \emph{declare D} & Verwerk declaratie D, breidt de stack uit om ruimte te maken voor variabelen die hierin gedeclareerd worden. \\
+    Declaratie & \emph{declare D} & Verwerk declaratie D, breidt de stack uit om ruimte te maken voor variabelen die hierin gedeclareerd worden. \\
     \hline
 \end{tabular} 
 
 Een programma in KIDEB is een serie commands. Elk los command kan een statement, een expressie of een declaratie zijn. Een programma kan er dus als volgt uitzien.
 \begin{description}
-    \item[run [[S]]] = \hfill \\
-        execute S \\
+    \item[run [[C]]] = \hfill \\
+        do C \\
         HALT
-    \item[run [[E]]] = \hfill \\
-        evaluate E \\
-        HALT
-    \item[run [[D]]] = \hfill \\
-        declare D \\
-        HALT
+\end{description}
+
+Dit leidt tot de volgende commando's.
+\begin{description}
+    \item[do [[S]]] = \hfill \\
+        execute S
+    \item[do [[E]]] = \hfill \\
+        evaluate E
+    \item[do [[D]]] = \hfill \\
+        declare D 
+\end{description}
+
+De statements gaan als volgt.
+\begin{description}
+    \item[execute [[I = E;]]] 
+
 \end{description}
 % chapter vertaalregels (end)
 \clearpage
