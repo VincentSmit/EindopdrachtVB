@@ -2,7 +2,13 @@ TODO lijstje VB
 
 Code
     - documentatie
-    - ?
+        * ast/CommonNodeAdaptor
+        * ast/ControlNode mist *
+        * ast/FunctionNode mist *
+        * ast/InvalidTypeException
+    - checker
+    - testprogramma's
+    - TODO's uit de code
 
 Verslag
     O Inleiding (als laatste te schrijven, bewust open)
@@ -14,3 +20,8 @@ Verslag
     L testplan (Meer testprogramma's schrijven en documenteren)
     O Conclusie (als laatste, voor de inleiding, bewust open)
     L Appendix (lexer af, checken. (Tree)parser specificatie toevoegen. Uitgebreid testprogramma maken en output hier neergooien.)
+
+Afronding
+    - README
+    - spelcheck verslag
+    - 

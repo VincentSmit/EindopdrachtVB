@@ -16,7 +16,7 @@ Voor het verwerken van types is het de klasse Type aangemaakt. Deze klasse bevat
 \label{sec:ast_klassen}
 De AST is uitgebreid met extra nodes, om extra benodigde informatie bij te houden. 
 
-De abstracte klasse \emph{AbstractNode} is een subklasse van CommonTree, de normale AST-klasse. Deze vormt de superklasse voor de klasse CommonNode. Deze laatste is de superklasse voor alle zelf-gedefinieerde AST-nodes. De node van het import-statement is een instantie van deze klasse, want, JA< WAAROM??
+De abstracte klasse \emph{AbstractNode} is een subklasse van CommonTree, de normale AST-klasse. Deze vormt de superklasse voor de klasse CommonNode. Deze laatste is de superklasse voor alle zelf-gedefinieerde AST-nodes. 
 
 De klasse ControlNode representeert nodes die de uitvoervolgorde van het programma veranderen. Hieronder vallen onder andere het return-, continue- en break-statement. Deze klasse houdt de scope bij waar het statement bij hoort. Deze klasse is een subklasse van CommonNode. 
 

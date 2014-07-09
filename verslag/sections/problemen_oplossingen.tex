@@ -12,23 +12,25 @@ Om bij te houden waar een variabele gedeclareerd is en gebruikt wordt, wordt een
 
 \section{Opbouwen AST} % (fold)
 \label{sec:opbouwen_ast}
-Voor het opbouwen van onze AST voldeed de standaar node niet. Hiertoe is een eigen node-hi\"erarchie gemaakt. De specificatie van deze nodes is te vinden in hoofdstuk \ref{cha:java_programmatuur}.
+Voor het opbouwen van onze AST voldeed de standaard node niet. Hiertoe is een eigen node-hi\"erarchie gemaakt. De specificatie van deze nodes is te vinden in hoofdstuk \ref{cha:java_programmatuur}.
+
+Een ander probleem met de AST is het moeten gebruiken van CommonNode voor de belangrijke node dublicatie. Om dit te voorkomen heeft de klasse AbstractNode, als subklasse van CommonNode, een functie met generiek type. Hier kunnen subklassen van CommonNode toch de methode \emph{getDuplicate()} gebruiken.
 % section opbouwen_ast (end)
 
 \section{Type inferentie} % (fold)
 \label{sec:type_inferentie}
-Type inferentie is een krachtige toevoeging voor een taal, maar brengt ook problemen met zich mee. Op compiletijd moet bepaald worden wat het type is, zonder het expliciet te vermelden.
+
 % section type_inferentie (end)
 
 \section{Import statement} % (fold)
 \label{sec:import_statement}
-probleem? denk t? gevonden op t web :).
+Een belangrijke functie in onze taal is het importeren van code. Dit is een lastig probleem, met een vrij simpele oplossing. Op de plek van het import-statement wordt in de AST van het hoofdprogramma de AST van de ge\"importeerde code geplaatst. Hierdoor is de code ook in het hoofdprogramma te gebruiken.
 % section import_statement (end)
 
-\section{Pointers} % (fold)
-\label{sec:pointers}
-Syntax probleem, probleem met asterisk. \textasteriskcentered
-% section pointers (end)
+\section{Arrays als argument} % (fold)
+\label{sec:arrays_als_argument}
+Het is niet mogelijk om in een functiedeclaratie een array mee te geven zonder een expressie binnen de blokhaken. Het is echter absoluut niet wenselijk te eisen dat arrays als argument voor een functie een vaste lengte hebben. Om dit probleem te verhelpen moeten functies die een array nodig heeft een pointer naar deze array mee krijgen, in plaats van de array zelf.
+% section arrays_als_argument (end)
 
 % chapter problemen_&_oplossingen (end)
 \clearpage
