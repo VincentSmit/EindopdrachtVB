@@ -11,14 +11,14 @@ Code
     - TODO's uit de code
 
 Verslag
-    O Inleiding (als laatste te schrijven, bewust open)
+    F Inleiding
     F Taalbeschrijving 
     L Problemen (Type inferentie)
     F syntax enz.
-    F Vertaalregels (Moet nog digitaal, groot deel al wel op papier)
-    F Java (Doorkijken aub, verder af)
-    L testplan (Misschien herschrijven)
-    O Conclusie (als laatste, voor de inleiding, bewust open)
+    F Vertaalregels 
+    F Java
+    F Testplan 
+    F Conclusie 
     L Appendix (lexer bijwerken.)
 
 Afronding
