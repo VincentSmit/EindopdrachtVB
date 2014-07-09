@@ -42,7 +42,7 @@ Afhankelijkheden:
 cd tests/
 python grammar.py
 python checker.py
-python generator.py
+python examples.py
 ```
 
 ## Uitvoeren van voorbeeldprogramma's
