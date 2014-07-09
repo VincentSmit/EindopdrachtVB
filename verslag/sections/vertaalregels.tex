@@ -53,12 +53,13 @@ De statements gaan als volgt.
     \emph{g:}&gexecute C\textsubscript{2} \\
     \emph{h:}& \\
         \end{tabular}
-    \item[execute [[while E then C]]] = \hfill \\
+    \item[execute [[while E do C]]] = \hfill \\
         \begin{tabular}{c l}
-            &JUMP \emph{h} \\
-    \emph{g:}&execute C \\
-    \emph{h:}&evaluate E \\
-            &JUMPIF(1) \emph{g} \\
+    \emph{g:}&evaluate E \\
+            &JUMPIF(0) \emph{h} \\
+            &execute C \\
+            &JUMP \emph{g} \\
+    \emph{h:}
         \end{tabular} 
     \item[execute [[return E]]]  = \hfill \\
         evaluate E \\
@@ -79,20 +80,33 @@ De expressie worden als volgt verwerkt.
         evaluate E\textsubscript{2} \\
         \itab{CALL p}\stab{p is het adres van de primitieve routine die hoort bij O}
     \item[evaluate [[I]]] = \hfill \\
-        fetchV
-    \item[evaluate [[]]] 
+        fetch I
+    \item[evaluate [[I(E\textsubscript{1},\dots,E\textsubscript{x})]]] = \hfill \\
+        evaluate E\textsubscript{1} \\
+        \dots \\
+        evaluate E\textsubscript{x} \\
+        \itab{CALL(r) e}\stab{//e is de geheugenlocatie van de commando's van I. (zie functiedeclaratie)}
 \end{description}
 
 Laden en opslaan van waarden in variabelen
 \begin{description}
-    \item[fetch [[I]]] 
-    \item[assign [[I]]]
+    \item[fetch [[I]]] = \hfill \\
+        LOAD (1) d[r]
+    \item[assign [[I]]] = \hfill \\
+        STORE (1) d[r]
 \end{description}
 
-Declaraties worden hiermee afgehandeld.
+Declaraties worden hiermee afgehandeld. Variabelen worden pas gedeclareerd wanneer hun bovenliggende functie gedeclareerd wordt. Als de generator een declaratie van een variabele tegenkomt, slaat hij deze dus over tot de functie declareerd wordt. Dan pas wordt er ruimte gemaakt voor de variabele.
 \begin{description}
+    \item[delcare [[func I(ARGS) returns T {C}]]] = \hfill \\
+        \begin{tabular}{c l}
+            &JUMP \emph{g} \\
+    \emph{e:}& execute C \\
+            \itab{\&RETURN(1) d}\stab{// d met groote van het aantal argumenten ARGS} \\
+    \emph{g:}& \\
+        \end{tabular}
     \item[declare [[T I]]] = \hfill \\ 
-
+        PUSH (1)
 \end{description}
 % chapter vertaalregels (end)
 \clearpage

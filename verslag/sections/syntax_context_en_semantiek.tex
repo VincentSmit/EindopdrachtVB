@@ -10,14 +10,14 @@ De terminale symbolen:
 \begin{description}
     \item \itab{:}\stab{;}\stab{(}\stab{)}\stab{[}
     \item \itab{]}\stab{\{}\stab{\}}\stab{,}\stab{\textbackslash}
-    \item \itab{!}\stab{+}\stab{-}\stab{/}\stab{\textless}
+    \item \itab{!=}\stab{+}\stab{-}\stab{/}\stab{\textless}
     \item \itab{\^}\stab{=}\stab{\textless}\stab{\textgreater}\stab{\textgreater =}
     \item \itab{\textless =}\stab{==}\stab{\textbar \textbar}\stab{\&\&}\stab{\textasteriskcentered}
     \item \itab{\&}\stab{\%}\stab{print}\stab{import}\stab{call}
     \item \itab{swap}\stab{if}\stab{else}\stab{then}\stab{do}
     \item \itab{while}\stab{from}\stab{break}\stab{continue}\stab{return}
-    \item \itab{returns}\stab{func}\stab{true}\stab{false}
-    \item \itab{char}\stab{var}\stab{of}\stab{int}\stab{bool}
+    \item \itab{returns}\stab{func}\stab{true}\stab{false}\stab{bool}
+    \item \itab{char}\stab{var}\stab{of}\stab{int}
 \end{description}
 % subsection terminale_symbolen (end)
 
@@ -59,6 +59,7 @@ De non-terminale symbolen:
         raw\_expression \\
         get\_expression \\
         operand \\
+        bool \\
         array\_literal \\
         array\_value\_list
     \item[type] \hfill \\
@@ -242,6 +243,8 @@ Voor de statements gelden de volgende regels.\\
 
 \texttt{Identifier = Expression} \\ Identifier and Expression must be of the same type.
 
+\texttt{import String\_waarde} \\ String\_waarde moet een bestaande bestandsnaam zijn.
+
 % subsection type_regels (end)
 
 \section{Semantiek} % (fold)
@@ -251,7 +254,7 @@ Deze sectie bespreekt de semantiek, ofwel de betekenis van de geschreven code.
 Een \emph{statement S} wordt uitgevoerd om de variabelen te updaten. Dit is inclusief input en output.
 \begin{itemize}
     \item Assign-statment(I = E): Expressie E wordt gevalueerd en levert de waarde \emph{v} op. Deze waarde wordt gekoppeld aan I.
-    \item Import-statment(import SW): Van stringwaarde SV wordt uitgezocht of het bestaat als .kib broncode bestand. Zo ja, wordt de AST van het porgramma uitgebreid met de AST van dit bestand en is de code uit dit bestand beschikbaar voor gebruik in de eigen brongcode.
+    \item Import-statment(import SW): Van stringwaarde SW wordt uitgezocht of het bestaat als .kib broncode bestand. Zo ja, wordt de AST van het porgramma uitgebreid met de AST van dit bestand en is de code uit dit bestand beschikbaar voor gebruik in de eigen brongcode.
     \item If-statement(if E then C\textsubscript{1} else C\textsubscript{2}): Expressie E wordt ge\"evalueerd en levert een booleanwaarde op. Als de boolean waarde \texttt{true} is, worden commando's C\textsubscript{1} uitgevoerd, anders commando's C\textsubscript{2}. 
     \item While-statement(while E do C): Expressie E wordt gevalueerd en levert een booleanwaarde op. Als de booleanwaarde \texttt{true} is, wordt commando C uitgevoerd. Daarna wordt E opnieuw gevalueerd. Is de booleanwaarde \texttt{false}, dan eindigt de loop.
     \item Print-statement(print(E)): De expressie E wordt gevalueerd en levert waarde \emph{v} op. Deze waarde \emph{v} wordt op de standaard output getoond.
@@ -264,9 +267,9 @@ Een \emph{expressie E} levert een waarde op na evaluatie.
     \item expressionPM(E\textsubscript{1} operator E\textsubscript{2}): Evalueert expressie E\textsubscript{1} en E\textsubscript{2}, welke beiden een integer opleveren. De waarde die de expressie AO oplevert is de opgetelde of afgetrokken waarde van beide expressies.
     \item expressionMD(E\textsubscript{1} operator E\textsubscript{2}): Evalueert expressie E\textsubscript{1} en E\textsubscript{2}, welke beiden een integer opleveren. De waarde die de expressie AO oplevert is de vermenigvuldigde of gedeelde waarde van beide expressies.
     \item expressionPW(E\textsubscript{1} operator E\textsubscript{2}): Evalueert expressie E\textsubscript{1} en E\textsubscript{2}, welke beiden een integer opleveren. De waarde die de expressie AO oplevert is E\textsubscript{1} tot de macht E\textsubscript{2}.
-    \item raw-expressie(\_\_tam\_\_ (type, SW)): JA, wat doet dit eigenlijk.
-    \item call-expressie(I(E\textsubscript{1},\dots E\textsubscript{x})): Evalueert expressie E\textsubscript{1} tot en met E\textsubscript{x} en leveren waarden v\textsubscript{1} tot en met v\textsubscript{x} op. Functie I wordt vervolgens aangeroepen met argumenten v\textsubscript{1} tot en met v\textsubscript{x}.
-    \item get-expressie(get I E): JA, wat doet dit eigenlijk.
+    \item raw-expressie(\_\_tam\_\_ (T, SW)): De stringwaarde SW is TAM-code. Met deze expressie is dus direct TAM-code uit te voeren in de taal. Het type T is het return-type van de expressie.
+    \item call-expressie(I(E\textsubscript{1},\dots, E\textsubscript{x})): Evalueert expressie E\textsubscript{1} tot en met E\textsubscript{x} en leveren waarden v\textsubscript{1} tot en met v\textsubscript{x} op. Functie I wordt vervolgens aangeroepen met argumenten v\textsubscript{1} tot en met v\textsubscript{x}.
+    \item get-expressie(I[E]): Expressie E wordt ge\"evalueerd en levert een integer met waarde \emph{v} op. Uit de array met identifier I wordt vervolgens de waarde op positie \emph{v} terug gegeven.
 \end{itemize}
 
 Een \emph{delclaratie D} wordt uitgevoerd om bindingen te maken. 
