@@ -21,7 +21,6 @@ if "--compile" in sys.argv:
     print_("Compiling grammar..")
     compile_grammar()
 
-
 def run_tam(filename, hush=False):
     print_("Compiling to TAM..")
     args = ("java", "-classpath", CLASSPATH, "Grammar", "-ast", "-tam", filename)
@@ -51,12 +50,15 @@ def run_tam(filename, hush=False):
             stdout, stderr = process.communicate()
             print(stdout)
 
-
             print_("Executing TASM..")
             args = ("java", "TAM.Interpreter", tasm.name)
-            process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = process.communicate()
-            print(stdout)
+            if "--buffer" in sys.argv:
+                process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout, stderr = process.communicate()
+                print(stdout)
+            else:
+                process = subprocess.Popen(args)
+                stdout, stderr = process.communicate()
 
 if __name__ == '__main__':
     from tests.test import set_cwd, GRAMMAR_DIR

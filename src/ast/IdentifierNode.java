@@ -83,6 +83,8 @@ public class IdentifierNode extends TypedNode{
      * Sets scope property on getRealNode()
      */
     public void setScope(FunctionNode scope){
+        //System.out.println(this);
+        //System.out.println(scope);
         this.getRealNode().scope = scope;
     }
 
@@ -108,7 +110,9 @@ public class IdentifierNode extends TypedNode{
      * @requires node != null
      * @ensures this.getRealNode() is node.getRealNode()
      */
-    public void setRealNode(IdentifierNode node){ this.realNode = node.getRealNode(); }
+    public void setRealNode(IdentifierNode node){
+        this.realNode = node;
+    }
 
     /**
      * Same as super, but gets property off getRealNode()

@@ -220,7 +220,7 @@ operand:
     (MULT IDENTIFIER) => DEREFERENCE^ IDENTIFIER<IdentifierNode> |
 
     // NOT
-    NOT^ operand |
+    NOT<TypedNode>^ operand |
 
     // Reference
     AMPERSAND^ IDENTIFIER<IdentifierNode> |

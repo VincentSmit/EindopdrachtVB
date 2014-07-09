@@ -156,7 +156,7 @@ assignment:
 
 
 type: primitive_type | composite_type;
-primitive_type: INTEGER | BOOLEAN | CHARACTER | VAR;
+primitive_type: INTEGER | BOOLEAN | CHARACTER | VAR | AUTO;
 composite_type:
     ARRAY primitive_type expression |
     ^(DEREFERENCE type);

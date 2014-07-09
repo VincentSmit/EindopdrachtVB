@@ -44,7 +44,7 @@ for fn in os.listdir(EXAMPLES_DIR):
         continue
 
     # Run file
-    process = subprocess.Popen((RUN_BINARY, fn), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen((RUN_BINARY, "--buffer", fn), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     process.wait()
 
     stdout = process.stdout.read()

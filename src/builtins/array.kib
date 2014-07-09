@@ -8,13 +8,25 @@ func halt() returns int{
     return __tam__(int, 'HALT');
 }
 
+func _printc(char c) returns char{
+    return __tam__(char, '
+        LOAD (1) -1[LB]
+        CALL put
+        LOADL 0
+    ');
+}
+
 func get_from_array(*var p, int index) returns var{
     // Only return if requested index lies between boundaries of array
     if (index >= 0 && index < size_of_array(p)){
         return *(p + index);
     }
     
-    print('X');
+    _printc('I'); _printc('n'); _printc('d'); _printc('e');
+    _printc('x'); _printc('E'); _printc('r'); _printc('r');
+    _printc('o'); _printc('r'); _printc('
+    ');
+
     halt();
 }
 

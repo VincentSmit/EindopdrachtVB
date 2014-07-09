@@ -1,0 +1,101 @@
+// Imports are files in the main directory. We've defined a folder called
+// builtins, in which a lot of code resides.
+import 'builtins/heap';
+import 'builtins/array';
+import 'builtins/math';
+import 'builtins/read';
+import 'builtins/print';
+
+// Pointers :)
+int a = 3;
+*int b = &a;
+
+// Function declaration
+func add_multiplicates(int a, int b) returns int{
+    // Function nesting
+    func mult(*int a, *int b) returns int{
+        // Dereferencing
+        return *a * *b;
+    }
+
+    // Pointer passing
+    return mult(&a, &b) + a + b;
+}
+
+// Printing integers
+print(add_multiplicates(3, 4));
+
+// Expression on single line
+add_multiplicates(3, 4);
+
+// Chars, can't do too much with them.. :(
+char c = 'h';
+print_char(c);
+print_char('e');
+print_char('l');
+print_char('l');
+print_char('o');
+print_newline();
+
+// Malloc! Pointer arithmetic is of course unchecked.
+*int p = alloc(10);
+p* = 4;
+p = p + 1;
+p* = 5;
+p = p - 1;
+
+// Hmm, maybe they are just like arrays?
+print(get_from_array(p, 0));
+print(p[1]);
+
+// Let's free it
+free(p);
+
+// Static arrays in functions (actually, they're stored on the heap and freeds
+// at the end of a function call).
+func abc() returns int{
+    int[5] p;
+    p[0] = 1;
+    p[1] = 3;
+    
+    print_char('E'); print_char('n'); print_char('t'); print_char('e');
+    print_char('r'); print_char(' '); print_char('d'); print_char('i');
+    print_char('g'); print_char('i'); print_char('t'); print_char(':');
+    print_char(' '); 
+
+    int index;
+    read_int(&index);
+    print(p[index]);
+    return 0;
+}
+
+// Ask for a digit, and retrieve it from an array. Try it with a index outside of the array!
+abc();
+
+// While loops!
+while(true){
+   a = a + 1;
+   if (a > 15){
+      break;
+   }
+}
+
+print(a);
+
+// Type inference, checker figures out type automatically
+auto z = 3;
+print(z + 1);
+
+// NOT
+if (!false){
+    print(42);
+}
+
+// Arithmetic
+print((3 + 5 / 2 * 3) % 138);
+print(power(3, 4));
+
+// Boolean operators
+if (5 < 9 && 3 > 1 + 1){
+    print(100);
+}

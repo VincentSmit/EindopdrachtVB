@@ -35,7 +35,6 @@ class CheckerTest(AntlrTest):
         """)
         self.assertIn("Found: INTEGER. Expected: ARRAY", stderr)
 
-
     def test_wrong_return_type(self):
         stdout, stderr = self.compile("""
         func x() returns char{ return 'c'; }

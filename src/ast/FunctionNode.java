@@ -114,7 +114,7 @@ public class FunctionNode extends IdentifierNode{
         FunctionNode f = this.getScope();
         while (!f.getName().equals("__root__")){
             fullName = String.format("%s_%s", f.getName(), fullName);
-            f = this.getScope();
+            f = f.getScope();
         }
 
         return fullName;

@@ -1,0 +1,23 @@
+func print_int(int i) returns int{
+    return __tam__(int, '
+                         LOAD(1) -1[LB]                ; Fetch i
+                         CALL putint                   ; Print integer
+                         LOAD(1) -1[LB]                ; Fetch i
+    ');
+}
+
+func print_char(char c) returns char{
+    return __tam__(char, '
+                         LOAD(1) -1[LB]                ; Fetch c
+                         CALL put                      ; Print character
+                         LOAD(1) -1[LB]                ; Fetch c
+    ');
+}
+
+func print_newline() returns char{
+    return __tam__(char, '
+                         LOADL 10                      ; Fetch newline
+                         CALL put                      ; Print character
+                         LOAD(1) -1[LB]                ; Fetch newline
+    ');
+}

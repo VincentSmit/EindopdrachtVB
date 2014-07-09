@@ -127,7 +127,11 @@ func_declaration:
         func.setName($id.text);
         func.setScope(loops.peek().getValue0());
         func.setExprType(Type.Primitive.FUNCTION);
-        log(String.format("Setting \%s.parent = \%s", $id.text, func.getScope().getName()));
+        log(String.format("Setting \%s.parent = \%s", func, func.getScope().getName()));
+
+        if (func.getScope().getScope() != null){
+            log(String.format("Setting \%s", func.getScope().getScope().getName()));
+        }
 
         // Register new scope of looping
         loops.push(Pair.with(func, new Stack<CommonNode>()));
@@ -300,9 +304,10 @@ assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode>{
 
 } ex=assign{
     // If `id` is AUTO, infer type from expression
-    if((inode.getExprType().getPrimType().equals(Type.Primitive.AUTO))){
-        inode.setExprType((TypedNode)$ex.tree);
-        log(String.format("Setting '\%s' to \%s", $id.text, inode.getExprType()));
+    if((inode.getRealNode().getExprType().getPrimType().equals(Type.Primitive.AUTO))){
+        inode.getRealNode().setExprType((TypedNode)$ex.tree);
+        assignType = ((TypedNode)$ex.tree).getExprType();
+        log(String.format("Setting '\%s' to \%s", $id.text, inode.getRealNode().getExprType()));
     } 
 
     TypedNode ext = (TypedNode)$ex.tree;
@@ -398,18 +403,24 @@ expression:
         inode.setRealNode(getID($id.tree, $id.text));
 
         checkers.symbol(get, "get_from_array", "builtins/math");
-        checkers.type(inode, Type.Primitive.ARRAY);
+        try{
+            checkers.type(inode, Type.Primitive.POINTER);
+        } catch (InvalidTypeException e) {
+            checkers.type(inode, Type.Primitive.ARRAY);
+        }
         checkers.type((TypedNode)$ex.tree, Type.Primitive.INTEGER);
 
         // Result returns inner type of array
         ((TypedNode)$get.tree).setExprType(inode.getExprType().getInnerType());
     }|
-    ^(n=NOT<TypedNode> ex=expression){
+    ^(nope=NOT<TypedNode> ex=expression){
         checkers.type((TypedNode)$ex.tree, Type.Primitive.BOOLEAN);
+        ((TypedNode)$nope.tree).setExprType(Type.Primitive.BOOLEAN);
     }|
     ^(p=POWER<TypedNode> base=expression power=expression){
         checkers.equal((TypedNode)$p.tree, (TypedNode)$base.tree, (TypedNode)$power.tree);
         checkers.symbol((TypedNode)$p.tree, "power", "builtins/math");
+        ((TypedNode)p).setExprType(Type.Primitive.INTEGER);
     };
 
 type:
