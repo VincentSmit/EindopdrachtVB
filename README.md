@@ -62,3 +62,22 @@ Decision can match input such as "MULT" using multiple alternatives: 5, 6
 ```
 
 Dit is normaal gedrag en is gedocumenteerd in `src/Grammar.g`:`95`.
+
+## Uitvoer voorbeeld
+```bash
+$ ./run_as_tam.py --compile --hush examples/fibonacci_recursive.kib 
+warning(200): /home/s1204254/code/vb2/tests/../src/Grammar.g:95:8: 
+Decision can match input such as "MULT" using multiple alternatives: 5, 6
+
+As a result, alternative(s) 6 were disabled for that input
+Assembly results:
+lines in file: 37
+lines of code: 37
+label lines  : 0
+lines ignored: 0
+
+********** TAM Interpreter (Java Version 2.0) **********
+610
+
+Program has halted normally.
+```
