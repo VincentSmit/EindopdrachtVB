@@ -8,8 +8,8 @@ public class Utils{
      * Helper function of register(). Determines register based on current lookupScopeLevel
      * and a difference between identifier and scope.
      *
-     * @requires: diff <= 6
-     * @return: one of {"LB", "SB", "L1" .. "L2"}
+     * @requires diff <= 6
+     * @return one of {"LB", "SB", "L1" .. "L2"}
      */
     public static String register(int lookupScopeLevel, int diff){
         String base = "LB"; // Local base
@@ -28,7 +28,8 @@ public class Utils{
     /**
      * Returns base in which 'inode' is registered, relative to the current scope. The following example
      * illustrates the workings:
-     *
+     * <pre>
+     * {@code
      *    var i;
      *    func a{
      *       var j;
@@ -38,14 +39,17 @@ public class Utils{
      *          lookup j; // II
      *       }
      *    }
+     * }
+     * </pre>
      *
      * I:  would result in "SB", and called as register(b, i);
+     * <p>
      * II: would result in "L1", and called as register(b, j);
      *
-     * @requires: difference of levels <= 6 (forced by parser)
-     * @param scope: scope in which identifier is looked up
-     * @param inode: identifier which has to be resolved
-     * @return: one of {"LB", "SB", "L1" .. "L2"}
+     * @requires difference of levels <= 6 (forced by checker)
+     * @param scope scope in which identifier is looked up
+     * @param inode identifier which has to be resolved
+     * @return one of {"LB", "SB", "L1" .. "L2"}
      */
     public static String register(FunctionNode scope, IdentifierNode inode){
         int lookupScopeLevel = (Integer)scope.getMemAddr().getValue0();
@@ -58,7 +62,7 @@ public class Utils{
     /**
      * Determines memory address of identifier, given a scope and identifier.
      *
-     * @return: String formatted as {offset:int}[{base:string}]
+     * @return String formatted as {offset:int}[{base:string}]
      */
     public static String addr(FunctionNode scope, IdentifierNode id){
         return String.format("%s[%s]", id.getRealNode().getMemAddr().getValue1(), register(scope, id));

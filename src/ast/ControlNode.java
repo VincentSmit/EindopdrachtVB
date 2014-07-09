@@ -3,7 +3,7 @@ package ast;
 import org.antlr.runtime.Token;
 import org.antlr.runtime.CommonToken;
 
-/*
+/**
  * Control nodes alter the flow of execution of a program. These are
  * for example RETURN, CONTINUE and BREAK. Each ControlNode contains
  * a 'scope' which it belongs to.
@@ -35,8 +35,8 @@ public class ControlNode extends CommonNode{
     /**
      * Sets scope property.
      *
-     * @ensures: this.getScope() == p
-     * @requires: p != null
+     * @ensures this.getScope() == p
+     * @requires p != null
      */
     public void setScope(CommonNode p){
         this.scope = p;

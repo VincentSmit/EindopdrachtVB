@@ -25,7 +25,7 @@ options {
     /**
      * Calls Utils.addr() with current call scope.
      *
-     * @param inode: identifier to resolve address for.
+     * @param inode identifier to resolve address for.
      */
     protected String addr(IdentifierNode inode){
         return Utils.addr(funcs.peek(), inode);

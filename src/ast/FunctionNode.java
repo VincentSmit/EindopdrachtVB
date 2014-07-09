@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 import org.antlr.runtime.Token;
 
-/*
+/**
  * A function has three special properties: it's arguments, variables (which most
  * likely need to be initialised at the start of calling it), return type and name.
  */
@@ -64,8 +64,8 @@ public class FunctionNode extends IdentifierNode{
     /**
      * Sets name property.
      *
-     * @requires: name != null
-     * @ensures: this.getName() == name
+     * @requires name != null
+     * @ensures this.getName() == name
      */
     public void setName(String name){
         this.name = name;
@@ -81,8 +81,8 @@ public class FunctionNode extends IdentifierNode{
     /**
      * Set returnType property
      *
-     * @requires: type != null
-     * @ensures: getReturnType() == type
+     * @requires type != null
+     * @ensures getReturnType() == type
      */
     public void setReturnType(Type type){
         ((FunctionNode)this.getRealNode()).returnType = type;
@@ -98,13 +98,13 @@ public class FunctionNode extends IdentifierNode{
      */
     public List<IdentifierNode> getArgs(){ return this.args; }
 
-    /*
+    /**
      * Returns qualified name including their parents, which can be used as a unique
      * name for this function inside a program.
      *
      * TODO: Allow for imported programs. As of now, this may create collisions.
      *
-     * @ensures: retval != null && retval.length() >= 1
+     * @ensures retval != null && retval.length() >= 1
      */
     public String getFullName(){
         if (this.getName().equals("__root__"))

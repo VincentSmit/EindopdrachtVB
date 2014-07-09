@@ -13,7 +13,7 @@ public class Emitter{
     public Emitter(){}
 
     /**
-     * @param labelLength: characters reserved for labeling
+     * @param labelLength characters reserved for labeling
      */
     public Emitter(int labelLength){
         this.labelLength = labelLength;
@@ -26,8 +26,8 @@ public class Emitter{
      * func_label:      PUSH 3     ; Initialise arguments of test()
      * ^label           ^code        ^comment
      *
-     * @requires: code != null
-     * @ensures: this.label == null && this.comment == null;
+     * @requires code != null
+     * @ensures this.label == null && this.comment == null;
      */
     public void emit(String code){
         // Print label
@@ -57,10 +57,10 @@ public class Emitter{
      * Prints code `s` formatted nicely according to emit(String). This adds an additional
      * comment at the end of the emitted code.
      *
-     * @param s: code to be emitted
-     * @param comment: comment to help read emitted code
-     * @requires: s != null
-     * @ensures: this.label == null && this.comment == null;
+     * @param s code to be emitted
+     * @param comment comment to help read emitted code
+     * @requires s != null
+     * @ensures this.label == null && this.comment == null;
      */
     public void emit(String s, String comment){
         this.comment = comment;
@@ -70,8 +70,8 @@ public class Emitter{
     /**
      * Set label property for following emit() call.
      *
-     * @requires: s != null
-     * @ensures: this.label != null
+     * @requires s != null
+     * @ensures this.label != null
      */
     public void emitLabel(String s, int ix){
         emitLabel(s, ((Integer)ix).toString());
@@ -80,8 +80,8 @@ public class Emitter{
     /**
      * Set label property for following emit() call.
      *
-     * @requires: s != null
-     * @ensures: this.label != null
+     * @requires s != null
+     * @ensures this.label != null
      */
     public void emitLabel(String s){
         if (this.label != null){
@@ -95,8 +95,8 @@ public class Emitter{
     /**
      * Set label property for following emit() call.
      *
-     * @requires: s1 != null && s2 != null
-     * @ensures: this.label != null
+     * @requires s1 != null && s2 != null
+     * @ensures this.label != null
      */
     public void emitLabel(String s1, String s2){
         emitLabel(String.format("%s%s", s1, s2));
@@ -105,8 +105,8 @@ public class Emitter{
     /**
      * Set label property for following emit() call.
      *
-     * @requires: s1 != null && s2 != null && s3 != null
-     * @ensures: this.label != null
+     * @requires s1 != null && s2 != null && s3 != null
+     * @ensures this.label != null
      */
     public void emitLabel(String s1, String s2, String s3){
         emitLabel(String.format("%s%s%s", s1, s2, s3));

@@ -15,8 +15,8 @@ public class Reporter{
     String[] source;
 
     /**
-     * @param report: enable reporting. If false, every call to log() does nothing.
-     * @param source: source code of program
+     * @param report enable reporting. If false, every call to log() does nothing.
+     * @param source source code of program
      */
     public Reporter(boolean report, String source){
         this.report = report;
@@ -26,7 +26,7 @@ public class Reporter{
     /**
      * Print 's' to stdout.
      *
-     * @param s: string to print
+     * @param s string to print
      * @requires s: s != null
      */
     public void log(String s){
@@ -41,7 +41,7 @@ public class Reporter{
      *       a+b
      *        ^
      *
-     * @requires: n != null
+     * @requires n != null
      */
     public String pointer(CommonTree n){
         StringWriter pointer = new StringWriter();
@@ -68,8 +68,8 @@ public class Reporter{
     /**
      * Throw an error with line number and character count. See log() for more information.
      *
-     * @param n: node which causes an error
-     * @param msg: custom message which will be shown alongside 'traceback'
+     * @param n node which causes an error
+     * @param msg custom message which will be shown alongside 'traceback'
      */
     public void error(CommonTree n, String msg) throws InvalidTypeException{
         throw new InvalidTypeException(String.format("%s%s\n", pointer(n), msg));

@@ -26,9 +26,9 @@ public class Function{
      *  3. Pushes empty space on stack for variables
      *  4. Registers new scope on 'generator'
      *
-     * @ensures: generator.funcs.size() + 1 == old.generator.funcs.size()
-     * @requires: generator != null && generator.funcs != null && f != null
-     * @param f: function to prepare
+     * @ensures generator.funcs.size() + 1 == old.generator.funcs.size()
+     * @requires generator != null && generator.funcs != null && f != null
+     * @param f function to prepare
      */
     public void enter(FunctionNode f){
         if(f.getMemAddr().getValue0() != 0){
@@ -51,10 +51,10 @@ public class Function{
      *   2. Emit label at end of function
      *   3. Deregisters this scope on generator.
      *
-     * @ensures: generator.funcs.size() - 1 == old.generator.funcs.size()
-     * @requires: generator != null && generator.funcs != null && f != null
-     * @requires: generator.funcs.size() >= 1
-     * @param func: function to deprepare
+     * @ensures generator.funcs.size() - 1 == old.generator.funcs.size()
+     * @requires generator != null && generator.funcs != null && f != null
+     * @requires generator.funcs.size() >= 1
+     * @param func function to deprepare
      */
     public void exit(FunctionNode func){
         // Deallocate all arrays. Yes, I know this is O(n) with n being the amount
