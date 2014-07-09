@@ -99,3 +99,9 @@ print(power(3, 4));
 if (5 < 9 && 3 > 1 + 1){
     print(100);
 }
+
+// Read to array
+int[4/2] xy;
+read_int_array(xy);
+print(xy[0]);
+print(xy[1]);
