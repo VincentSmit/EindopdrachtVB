@@ -1,0 +1,55 @@
+__root__:                PUSH 1
+                         LOADL 0
+                         STORE(1) 0[SB]                ; a
+DO15:                    LOAD(1) 0[SB]                 ; a
+                         LOADL 10
+                         CALL lt
+                         JUMPIF(0) AFTER15[CB]
+                         LOAD(1) 0[SB]                 ; a
+                         LOADL 1
+                         CALL add
+                         STORE(1) 0[SB]                ; a
+                         JUMP DO15[CB]
+AFTER15:                 LOAD(1) 0[SB]                 ; a
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+DO39:                    LOADL 1
+                         JUMPIF(0) AFTER39[CB]
+                         LOAD(1) 0[SB]                 ; a
+                         LOADL 1
+                         CALL add
+                         STORE(1) 0[SB]                ; a
+IF54:                    LOAD(1) 0[SB]                 ; a
+                         LOADL 15
+                         CALL gt
+                         JUMPIF (0) ELSE54[CB]
+                         JUMP AFTER39[CB]
+                         JUMP ENDIF54[CB]
+ELSE54:                  PUSH 0                        ; NOP for secondary label
+ENDIF54:                 JUMP DO39[CB]
+AFTER39:                 LOAD(1) 0[SB]                 ; a
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+DO71:                    LOADL 1
+                         JUMPIF(0) AFTER71[CB]
+                         LOAD(1) 0[SB]                 ; a
+                         LOADL 1
+                         CALL add
+                         STORE(1) 0[SB]                ; a
+IF86:                    LOAD(1) 0[SB]                 ; a
+                         LOADL 20
+                         CALL lt
+                         JUMPIF (0) ELSE86[CB]
+                         JUMP DO71[CB]
+                         JUMP ENDIF86[CB]
+ELSE86:                  PUSH 0                        ; NOP for secondary label
+ENDIF86:                 JUMP AFTER71[CB]
+                         JUMP DO71[CB]
+AFTER71:                 LOAD(1) 0[SB]                 ; a
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+__root__after:           HALT
+

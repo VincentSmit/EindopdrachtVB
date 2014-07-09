@@ -90,7 +90,7 @@ public class Grammar {
                 // Allow operating system to print to console (because flush()
                 // doesn't work..)
                 try {
-                    Thread.sleep(50);
+                    Thread.sleep(150);
                 } catch(InterruptedException ex) {
                     Thread.currentThread().interrupt();
                 }

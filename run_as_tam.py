@@ -46,10 +46,17 @@ def run_tam(filename, hush=False):
 
         with tempfile.NamedTemporaryFile(suffix=".tasm") as tasm:
             print_("Compiling to TASM..")
-            subprocess.call(("java", "TAM.Assembler", tam.name, tasm.name))
+            args = ("java", "TAM.Assembler", tam.name, tasm.name)
+            process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+            print(stdout)
+
 
             print_("Executing TASM..")
-            subprocess.call(("java", "TAM.Interpreter", tasm.name))
+            args = ("java", "TAM.Interpreter", tasm.name)
+            process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = process.communicate()
+            print(stdout)
 
 if __name__ == '__main__':
     from tests.test import set_cwd, GRAMMAR_DIR

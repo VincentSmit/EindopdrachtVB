@@ -1,0 +1,52 @@
+__root__:                PUSH 2
+                         JUMP allocafter[CB]
+alloc:                   LOAD(1) -1[LB]                ; Fetch size
+                         LOADL 1                       ; Add one to size in order to store
+                         CALL add                      ; ..it for a seq call to free
+                         CALL new                      ; Allocate space on heap
+                         LOAD(1) -1[LB]                ; Fetch size
+                         LOADL 1                       ; (Add one again)
+                         CALL add;                     ; 
+                         LOAD(1) -2[ST]                ; Copy pointer
+                         STOREI(1)                     ; Store size of allocation
+                         LOADL 1                       ; 
+                         CALL add                      ; Let user believe allocating is magic
+                         RETURN (1) 1                  ; Return and pop arguments
+allocafter:              JUMP freeafter[CB]
+free:                    LOAD(1) -1[LB]                ; Fetch p
+                         LOADL 1                       ; Substract one to access size
+                         CALL sub                      ; 
+                         LOADI(1)                      ; Fetch size from pointer
+                         LOAD(1) -1[LB]                ; Fetch p
+                         CALL dispose                  ; Clean heap 
+                         LOADL 0                       ; Load return argument to make compiler happy
+                         RETURN (1) 1                  ; Return and pop arguments
+freeafter:               LOADL 10
+                         CALL (SB) alloc[CB]
+                         STORE(1) 0[SB]                ; a
+                         LOAD(1) 0[SB]                 ; a
+                         LOADL 1
+                         CALL sub
+                         LOADI(1)
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+                         LOAD(1) 0[SB]                 ; a
+                         STORE(1) 1[SB]                ; b
+                         LOADL 3
+                         LOADA 1[SB]                   ; b
+                         LOADI (1)
+                         STOREI(1)
+                         LOAD(1) 1[SB]                 ; b
+                         LOADL 1
+                         CALL add
+                         STORE(1) 1[SB]                ; b
+                         LOADL 4
+                         LOADA 1[SB]                   ; b
+                         LOADI (1)
+                         STOREI(1)
+                         LOAD(1) 0[SB]                 ; a
+                         CALL (SB) free[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+__root__after:           HALT
+
