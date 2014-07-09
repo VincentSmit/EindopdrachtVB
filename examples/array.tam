@@ -1,0 +1,109 @@
+__root__:                PUSH 1
+                         JUMP size_of_arrayafter[CB]
+size_of_array:           PUSH 1
+                         LOAD(1) -1[LB]                ; p
+                         LOADL 1
+                         CALL sub
+                         LOADI(1)
+                         STORE(1) 0[LB]                ; size
+                         LOAD(1) 0[LB]                 ; size
+                         LOADL 1
+                         CALL sub
+                         RETURN (1) 1                  ; Return and pop arguments
+size_of_arrayafter:      JUMP haltafter[CB]
+halt:                    HALT
+                         RETURN (1) 0                  ; Return and pop arguments
+haltafter:               JUMP get_from_arrayafter[CB]
+get_from_array:          PUSH 0                        ; NOP for secondary label
+IF81:                    LOAD(1) -1[LB]                ; index
+                         LOADL 0
+                         CALL ge
+                         LOAD(1) -1[LB]                ; index
+                         LOAD(1) -2[LB]                ; p
+                         CALL (LB) size_of_array[CB]
+                         CALL lt
+                         CALL and
+                         JUMPIF (0) ELSE81[CB]
+                         LOAD(1) -2[LB]                ; p
+                         LOAD(1) -1[LB]                ; index
+                         CALL add
+                         LOADI(1)
+                         RETURN (1) 2                  ; Return and pop arguments
+                         JUMP ENDIF81[CB]
+ELSE81:                  PUSH 0                        ; NOP for secondary label
+ENDIF81:                 LOADL 88
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+                         CALL (LB) halt[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+get_from_arrayafter:     JUMP allocafter[CB]
+alloc:                   LOAD(1) -1[LB]                ; Fetch size
+                         LOADL 1                       ; Add one to size in order to store
+                         CALL add                      ; ..it for a seq call to free
+                         CALL new                      ; Allocate space on heap
+                         LOAD(1) -1[LB]                ; Fetch size
+                         LOADL 1                       ; (Add one again)
+                         CALL add;                     ; 
+                         LOAD(1) -2[ST]                ; Copy pointer
+                         STOREI(1)                     ; Store size of allocation
+                         LOADL 1                       ; 
+                         CALL add                      ; Let user believe allocating is magic
+                         RETURN (1) 1                  ; Return and pop arguments
+allocafter:              JUMP freeafter[CB]
+free:                    LOAD(1) -1[LB]                ; Fetch p
+                         LOADL 1                       ; Substract one to access size
+                         CALL sub                      ; 
+                         LOADI(1)                      ; Fetch size from pointer
+                         LOAD(1) -1[LB]                ; Fetch p
+                         CALL dispose                  ; Clean heap 
+                         LOADL 0                       ; Load return argument to make compiler happy
+                         RETURN (1) 1                  ; Return and pop arguments
+freeafter:               LOADL 3
+                         CALL (L1) alloc[CB]           ; Allocate array
+                         STORE(1) 0[SB]                ; Store pointer in a
+                         LOADL 5
+                         LOADL 0
+                         LOADA 0[SB]
+                         LOADI(1)                      ; First element of array a
+                         CALL add                      ; Plus N elements
+                         STOREI(1)                     ; Store array value
+                         LOADL 6
+                         LOADL 1
+                         LOADA 0[SB]
+                         LOADI(1)                      ; First element of array a
+                         CALL add                      ; Plus N elements
+                         STOREI(1)                     ; Store array value
+                         LOADL 7
+                         LOADL 2
+                         LOADA 0[SB]
+                         LOADI(1)                      ; First element of array a
+                         CALL add                      ; Plus N elements
+                         STOREI(1)                     ; Store array value
+                         LOADA 0[SB]                   ; a
+                         LOADI(1)                      ; Resolve pointer to first element
+                         LOADL 0
+                         CALL (SB) get_from_array[CB]
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+                         LOADA 0[SB]                   ; a
+                         LOADI(1)                      ; Resolve pointer to first element
+                         LOADL 1
+                         CALL (SB) get_from_array[CB]
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+                         LOADA 0[SB]                   ; a
+                         LOADI(1)                      ; Resolve pointer to first element
+                         LOADL 2
+                         CALL (SB) get_from_array[CB]
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+                         LOADA 0[SB]                   ; a
+                         LOADI(1)                      ; Load heap pointer to array
+                         CALL (L1) free[CB]            ; Freeeedooooooom
+                         POP(1) 0                      ; Pop useless call result
+__root__after:           HALT
+

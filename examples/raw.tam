@@ -1,0 +1,9 @@
+__root__:                PUSH 1
+                         LOADL 53 ; w00t, Im native TAM!
+                         STORE(1) 0[SB]                ; a
+                         LOAD(1) 0[SB]                 ; a
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+__root__after:           HALT
+

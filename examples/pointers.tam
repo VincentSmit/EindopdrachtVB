@@ -1,0 +1,36 @@
+__root__:                PUSH 3
+                         LOADL 3
+                         STORE(1) 0[SB]                ; a
+                         LOADA 0[SB]                   ; %a
+                         STORE(1) 1[SB]                ; b
+                         LOADA 1[SB]                   ; %b
+                         STORE(1) 2[SB]                ; c
+                         LOAD(1) 0[SB]                 ; a
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+                         LOADL 10
+                         LOADA 2[SB]                   ; c
+                         LOADI (1)
+                         LOADI (1)
+                         STOREI(1)
+                         LOAD(1) 0[SB]                 ; a
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+                         JUMP edit_pointerafter[CB]
+edit_pointer:            LOADL 20
+                         LOADA -1[LB]                  ; p
+                         LOADI (1)
+                         STOREI(1)
+                         LOADL 0
+                         RETURN (1) 1                  ; Return and pop arguments
+edit_pointerafter:       LOAD(1) 1[SB]                 ; b
+                         CALL (SB) edit_pointer[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOAD(1) 0[SB]                 ; a
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+__root__after:           HALT
+

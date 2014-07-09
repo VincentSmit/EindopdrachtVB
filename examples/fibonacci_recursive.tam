@@ -1,0 +1,38 @@
+__root__:                JUMP fibafter[CB]
+fib:                     PUSH 0                        ; NOP for secondary label
+IF13:                    LOAD(1) -1[LB]                ; x
+                         LOADL 0
+                         LOADL 1
+                         CALL eq
+                         JUMPIF (0) ELSE13[CB]
+                         LOADL 0
+                         RETURN (1) 1                  ; Return and pop arguments
+                         JUMP ENDIF13[CB]
+ELSE13:                  PUSH 0                        ; NOP for secondary label
+ENDIF13:                 PUSH 0                        ; NOP for secondary label
+IF28:                    LOAD(1) -1[LB]                ; x
+                         LOADL 1
+                         LOADL 1
+                         CALL eq
+                         JUMPIF (0) ELSE28[CB]
+                         LOADL 1
+                         RETURN (1) 1                  ; Return and pop arguments
+                         JUMP ENDIF28[CB]
+ELSE28:                  PUSH 0                        ; NOP for secondary label
+ENDIF28:                 LOAD(1) -1[LB]                ; x
+                         LOADL 2
+                         CALL sub
+                         CALL (LB) fib[CB]
+                         LOAD(1) -1[LB]                ; x
+                         LOADL 1
+                         CALL sub
+                         CALL (LB) fib[CB]
+                         CALL add
+                         RETURN (1) 1                  ; Return and pop arguments
+fibafter:                LOADL 15
+                         CALL (SB) fib[CB]
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+__root__after:           HALT
+

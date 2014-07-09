@@ -1,0 +1,27 @@
+__root__:                JUMP po_werafter[CB]
+po_wer:                  PUSH 1
+                         LOAD(1) -2[LB]                ; b
+                         STORE(1) 0[LB]                ; res
+DO28:                    LOAD(1) -1[LB]                ; e
+                         LOADL 1
+                         CALL gt
+                         JUMPIF(0) AFTER28[CB]
+                         LOAD(1) 0[LB]                 ; res
+                         LOAD(1) -2[LB]                ; b
+                         CALL mult
+                         STORE(1) 0[LB]                ; res
+                         LOAD(1) -1[LB]                ; e
+                         LOADL 1
+                         CALL sub
+                         STORE(1) -1[LB]               ; e
+                         JUMP DO28[CB]
+AFTER28:                 LOAD(1) 0[LB]                 ; res
+                         RETURN (1) 2                  ; Return and pop arguments
+po_werafter:             LOADL 2
+                         LOADL 7
+                         CALL (SB) po_wer[CB]
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+__root__after:           HALT
+

@@ -1,0 +1,34 @@
+__root__:                PUSH 1
+                         JUMP powerafter[CB]
+power:                   PUSH 1
+                         LOAD(1) -2[LB]                ; b
+                         STORE(1) 0[LB]                ; res
+DO30:                    LOAD(1) -1[LB]                ; e
+                         LOADL 1
+                         CALL gt
+                         JUMPIF(0) AFTER30[CB]
+                         LOAD(1) 0[LB]                 ; res
+                         LOAD(1) -2[LB]                ; b
+                         CALL mult
+                         STORE(1) 0[LB]                ; res
+                         LOAD(1) -1[LB]                ; e
+                         LOADL 1
+                         CALL sub
+                         STORE(1) -1[LB]               ; e
+                         JUMP DO30[CB]
+AFTER30:                 LOAD(1) 0[LB]                 ; res
+                         RETURN (1) 2                  ; Return and pop arguments
+powerafter:              LOADL 2
+                         LOADL 7
+                         CALL (SB) power[CB]
+                         LOADL 7
+                         LOADL 2
+                         CALL mod
+                         CALL add
+                         STORE(1) 0[SB]                ; a
+                         LOAD(1) 0[SB]                 ; a
+                         CALL putint
+                         LOADL 10                      ; Print newline
+                         CALL put
+__root__after:           HALT
+
