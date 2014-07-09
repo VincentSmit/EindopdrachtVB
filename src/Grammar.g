@@ -17,7 +17,6 @@ tokens {
     LCURLY = '{';
     RCURLY = '}';
     COMMA = ',';
-    DOUBLE_QUOTE = '"';
     SINGLE_QUOTE = '\'';
     BODY = 'body';
     EXPR = 'assignment_expression';
@@ -51,7 +50,6 @@ tokens {
 
     // keywords
     PROGRAM = 'program';
-    SWAP = 'swap';
     IF = 'if';
     ELSE = 'else';
     DO = 'do';

@@ -16,8 +16,7 @@ Tekens
     \item \itab{LCURLY}     \tab{\{}
     \item \itab{RCURLY}     \tab{\}}
     \item \itab{COMMA}      \tab{,}
-    \item \itab{DOUBLE\_QUOTE} \tab{"}
-    \item \itab{SINGLE\_QUOTE} \tab{\textbackslash}
+    \item \itab{SINGLE\_QUOTE} \tab{'}
     \item \itab{BODY}       \tab{body}
     \item \itab{EXPR}       \tab{assignment\_expression}
     \item \itab{GET}        \tab{get\_expression}
@@ -28,6 +27,7 @@ Tekens
 Operators
 \begin{description}
     \item \itab{Token}      \tab{teken}
+    \item \itab{NOT}        \tab{!}
     \item \itab{PLUS}       \tab{+}
     \item \itab{MINUS}      \tab{-}
     \item \itab{DIVIDES}    \tab{/}
@@ -37,18 +37,18 @@ Operators
     \item \itab{GT}         \tab{\textgreater}
     \item \itab{GTE}        \tab{\textgreater =}
     \item \itab{LTE}        \tab{\textless =}
-    \item \itab{EQ}         \tab{=}
-    \item \itab{NEQ}        \tab{!}
-    \item \itab{ASSIGN}     \tab{==}
+    \item \itab{EQ}         \tab{==}
+    \item \itab{NEQ}        \tab{!=}
+    \item \itab{ASSIGN}     \tab{=}
     \item \itab{OR}         \tab{\textbar \textbar}
     \item \itab{AND}        \tab{\&\&}
+    \item \itab{MOD}        \tab{\%}
 \end{description}
 
 Pointers
 \begin{description}
     \item \itab{Token}      \tab{teken}
     \item \itab{AMPERSAND}  \tab{\&}
-    \item \itab{ASTERIX}    \tab{\%}
 \end{description}
 
 \clearpage
@@ -57,7 +57,6 @@ Keywords van KIDEB
 \begin{description}
     \item \itab{Token}      \tab{keyword}
     \item \itab{PROGRAM}    \tab{program}
-    \item \itab{SWAP}       \tab{swap}
     \item \itab{IF}         \tab{if}
     \item \itab{THEN}       \tab{then}
     \item \itab{ELSE}       \tab{else}
@@ -741,10 +740,14 @@ De Codegenerator
 \label{sec:testverslag}
 Dit zijn de python bestanden die alle tests afhandelen. De output bij incorrect broncode wordt afgevangen in de tests zelf en wordt dus niet als output gegeven. Er is alleen noemenswaardige output als de test faalt, dus er niet opgeleverd wordt wat verwacht is. Met de huidige test komt dit niet voor.
 
-De syntax-tester.
-\includecode[python]{De syntax-tester}{../tests/grammar.py}
-De context-tester.
-\includecode[python]{De context-tester}{../tests/checker.py}
+De code die alles test.
+% \includecode[java]{all.kib}{../src/builtins/all.kib}
+
+De bijbehorende gegenereerde TAM-code.
+% \includecode[[x86masm]Assembler]{all.tam}{../src/builtins/all.tam}
+
+De uitvoer van het testprogramma.
+% \includecode[java]{all.out}{../src/builtins/all.out}
 
 % section testverslag (end)
 

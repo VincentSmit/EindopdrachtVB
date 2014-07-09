@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+from test import compile_grammar, check_antlr
 
 import os
 import subprocess
@@ -13,6 +14,9 @@ OUTPUT_START = "********** TAM Interpreter (Java Version 2.0) **********"
 OUTPUT_END = "Program has halted normally."
 TAM_START = "TAM:"
 TAM_END = "Compiling to TASM.."
+
+check_antlr()
+compile_grammar()
 
 def get_part(output, start, end):
     output = output.split("\n")
