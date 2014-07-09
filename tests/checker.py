@@ -12,6 +12,37 @@ class CheckerTest(AntlrTest):
     def compile(self, grammar):
         return super(CheckerTest, self).compile(grammar, options=("-report", "-ast"))
 
+    def test_array_lookup(self):
+        stdout, stderr = self.compile("""
+            import 'builtins/heap';
+            int[3] a;
+            a[2];
+        """)
+        self.assertIn("Could not find get_from_array()", stderr)
+
+        stdout, stderr = self.compile("""
+            import 'builtins/heap';
+            import 'builtins/array';
+            int[3] a;
+            a['c'];
+        """)
+        self.assertIn("Found: CHARACTER. Expected: INTEGER.", stderr)
+
+        stdout, stderr = self.compile("""
+            import 'builtins/array';
+            int a;
+            a[3];
+        """)
+        self.assertIn("Found: INTEGER. Expected: ARRAY", stderr)
+
+
+    def test_wrong_return_type(self):
+        stdout, stderr = self.compile("""
+        func x() returns char{ return 'c'; }
+        int a = x();
+        """)
+        self.assertIn("Cannot assign value of Type<CHARACTER> to variable of Type<INTEGER>.", stderr)
+
     def test_array_to_pointer(self):
         stdout, stderr = self.compile("""
             import 'builtins/heap';
@@ -41,28 +72,6 @@ class CheckerTest(AntlrTest):
         stdout, stderr = self.compile("import 'builtins/heap'; int[3] a;")
         self.assertFalse(stderr)
 
-    def test_array_lookup(self):
-        stdout, stderr = self.compile("""
-            import 'builtins/heap';
-            int[3] a;
-            a[2];
-        """)
-        self.assertIn("Could not find get_from_array()", stderr)
-
-        stdout, stderr = self.compile("""
-            import 'builtins/heap';
-            import 'builtins/array';
-            int[3] a;
-            a['c'];
-        """)
-        self.assertIn("Expected Type<INTEGER> but found Type<CHARACTER>", stderr)
-
-        stdout, stderr = self.compile("""
-            import 'builtins/array';
-            int a;
-            a[3];
-        """)
-        self.assertIn("Expected array but found Type<INTEGER>", stderr)
 
     def test_variable_type(self):
         """We only accept variable types on assignments and function returns."""
@@ -153,12 +162,6 @@ class CheckerTest(AntlrTest):
         """)
         self.assertIn("Expected 2 arguments, 1 given.", stderr)
 
-    def test_wrong_return_type(self):
-        stdout, stderr = self.compile("""
-        func x() returns char{ return 'c'; }
-        int a = x();
-        """)
-        self.assertIn("Cannot assign value of Type<CHARACTER> to variable of Type<INTEGER>.", stderr)
 
     def test_wrong_arguments(self):
         stdout, stderr = self.compile("""
@@ -225,7 +228,7 @@ class CheckerTest(AntlrTest):
 
         # Return unknown type
         stdout, stderr = self.compile("func a() returns int{ auto b; return b; }")
-        self.assertIn("Return value must have type, not auto (maybe we did not discover its type yet?)", stderr)
+        self.assertIn("Return value must have type, not auto (maybe we did not discover it's type yet?)", stderr)
 
         # Return wrong type
         stdout, stderr = self.compile("func a() returns int{ return true; }")
@@ -239,12 +242,7 @@ class CheckerTest(AntlrTest):
         stdout, stderr = self.compile("continue;")
         self.assertIn("'continue' outside loop.", stderr)
 
-        stdout, stderr = self.compile("""
-            import 'builtins/heap';
-            int i;
-            int[1] a;
-            for i in a{ continue; }
-        """)
+        stdout, stderr = self.compile("""while (true){ continue; }""")
         self.assertFalse(stderr)
 
         # Don't know why you would use this syntax but hey..
@@ -255,12 +253,7 @@ class CheckerTest(AntlrTest):
         stdout, stderr = self.compile("break;")
         self.assertIn("'break' outside loop.", stderr)
 
-        stdout, stderr = self.compile("""
-            import 'builtins/heap';
-            int i;
-            int[1] a;
-            for i in a{ break; }
-        """)
+        stdout, stderr = self.compile("""while (true){ break; }""")
         self.assertFalse(stderr)
 
         # Don't know why you would use this syntax but hey..
@@ -321,19 +314,9 @@ class CheckerTest(AntlrTest):
         stdout, stderr = self.compile("int a = 3; if(a){}")
         self.assertTrue("Expression must of be of type boolean. Found: Type<INTEGER>." in stderr)
 
-    def todo_test_for(self):
-        stdout, stderr = self.compile("int a;\nfor a in a{}")
-        self.assertTrue("Expression must be iterable. Found: Type<INTEGER>." in stderr)
-
-        stdout, stderr = self.compile("int a; char[1] b;\nfor a in b{}")
-        self.assertTrue("""
-Variable must be of same type as elements of iterable:
-   a: Type<INTEGER>
-   elements of iterable: Type<CHARACTER>""" in stderr)
-
     def test_bool_op(self):
         stdout, stderr = self.compile("int a = 3; a && (1 < 2);")
-        self.assertTrue("Expression of type boolean expected. Found: Type<INTEGER>" in stderr)
+        self.assertTrue("Found: INTEGER. Expected: BOOLEAN" in stderr)
 
         stdout, stderr = self.compile("(2 > 3) && (1 < 2);")
         self.assertFalse(stderr)
@@ -358,7 +341,7 @@ Variable must be of same type as elements of iterable:
         self.assertFalse(stderr)
 
         stdout, stderr = self.compile("!1;")
-        self.assertIn("Expected Type<BOOLEAN> but found Type<INTEGER>", stderr)
+        self.assertIn("Found: INTEGER. Expected: BOOLEAN", stderr)
 
 
 if __name__ == '__main__':

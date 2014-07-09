@@ -27,7 +27,7 @@ options {
 // Alter code generation so catch-clauses get replaced with this action. 
 // This disables ANTLR ERROR handling: CalcExceptions are propagated upwards.
 @members {
-    private SymbolTable<IdEntry> symtab = new SymbolTable<>();
+    protected SymbolTable<IdEntry> symtab = new SymbolTable<>();
 
     private IdentifierNode getID(CommonNode node, String id) throws InvalidTypeException{
         if (symtab.retrieve(id) == null){
@@ -35,6 +35,9 @@ options {
         }
         return symtab.retrieve(id).getNode();
     }
+
+    //
+    private Checkers checkers = new Checkers(this);
 
     // Upon evaluating pointer assignments (b\% = 3, for example) we need to keep track
     // of the current type while descending the tree: (ASSIGN b (\% 3)).
@@ -57,21 +60,7 @@ options {
     public void setReporter(Reporter r){ this.reporter = r; }
     public void log(String msg){ this.reporter.log(msg); }
 
-    public void checkSameOp(CommonNode op, TypedNode ex1tree, TypedNode ex2tree) throws InvalidTypeException{
-        // If one of the typednodes has type auto, assume type of other typednode.
-        if(ex1tree.getExprType().getPrimType().equals(Type.Primitive.AUTO)){
-            ex1tree.setExprType(ex2tree.getExprType());
-        } else if(ex2tree.getExprType().getPrimType().equals(Type.Primitive.AUTO)){
-            ex2tree.setExprType(ex1tree.getExprType());
-        }
 
-        if(!(ex1tree.getExprType().equals(ex2tree.getExprType()))){
-            reporter.error(op, "Expected operands to be of same type. Found: " +
-            ex1tree.getExprType() + " and " + ex2tree.getExprType() + ".");
-        }
-
-        ((TypedNode)op).setExprType(ex1tree.getExprType());
-    }
 }
 
 program
@@ -232,33 +221,7 @@ statement:
         // Add this loop to the stack of current loops
         loops.peek().getValue1().push($w.tree);
      } ex=expression command*) {
-        TypedNode ext = (TypedNode)$ex.tree;
-        if(!ext.getExprType().equals(Type.Primitive.BOOLEAN)) {
-            reporter.error($ex.tree, "Expression must be of type boolean. Found: " + ext.getExprType() + ".");
-        }
-    } |
-    ^(f=FOR{
-        // Add this loop to the stack of current loops
-        loops.peek().getValue1().push($f.tree);
-     } id=IDENTIFIER<IdentifierNode> ex=expression commands?) {
-        // Retrieve identifier from symtab.
-        ((IdentifierNode)$id.tree).setRealNode(getID($id.tree, $id.text));
-
-        // Check if argument is indeed an array
-        TypedNode ext = (TypedNode)$ex.tree;
-        if(!ext.getExprType().getPrimType().equals(Type.Primitive.ARRAY)) {
-            reporter.error($ex.tree, "Expression must be iterable. Found: " + ext.getExprType() + ".");
-        }
-
-        // Compare innertype of array with identifier type
-        Type inner = ext.getExprType().getInnerType();
-        if(!((TypedNode)$id.tree).getExprType().equals(inner)){
-            reporter.error($id.tree,
-                "Variable must be of same type as elements of iterable:\n" +
-                String.format("   \%s: \%s\n", $id.text, ((TypedNode)$id.tree).getExprType()) +
-                String.format("   elements of iterable: \%s", inner)
-            );
-        }
+        checkers.type((TypedNode)$ex.tree, Type.Primitive.BOOLEAN);
     } |
     ^(r=RETURN<ControlNode> ex=expression){
         // Set parent (function) of this control node (break, continue)
@@ -280,9 +243,7 @@ statement:
         }
 
         // If we don't know the type of `expr`, throw an error.
-        if (expr.getExprType().getPrimType() == Type.Primitive.AUTO){
-            reporter.error(ret, "Return value must have type, not auto (maybe we did not discover its type yet?)");
-        }
+        checkers.typeEQ(expr, Type.Primitive.AUTO, "Return value must have type, not auto (maybe we did not discover it's type yet?)");
 
         // Test equivalence of types
         if (!func.getReturnType().equals(expr.getExprType(), true)){
@@ -290,8 +251,6 @@ statement:
                 "Expected \%s, but got \%s.", func.getReturnType(), expr.getExprType())
             );
         }
-
-
     }|
     b=BREAK<ControlNode>{
         try{
@@ -357,7 +316,8 @@ assignment: ^(a=ASSIGN id=IDENTIFIER<IdentifierNode>{
 
 bool_op: AND | OR;
 same_op: PLUS | MINUS | DIVIDES | MULT | MOD;
-same_bool_op: LT | GT | LTE | GTE | EQ | NEQ;
+same_bool_op: EQ | NEQ;
+same_bool_int_op: LT | GT | LTE | GTE;
 
 expression_list: expr=expression {
     TypedNode arg = calling.getArgs().get(argumentCount);
@@ -377,7 +337,6 @@ expression_list: expr=expression {
 expression:
     operand |
     ^(c=CALL<TypedNode> id=IDENTIFIER<IdentifierNode>{
-        // TODO: Check against function definition
         IdentifierNode idNode = (IdentifierNode)$id.tree;
         idNode.setRealNode(getID($id.tree, $id.text));
         FunctionNode func = calling = (FunctionNode)idNode.getRealNode();
@@ -395,15 +354,8 @@ expression:
     })|
     ^(op=bool_op ex1=expression ex2=expression) {
         ((TypedNode)$op.tree).setExprType(new Type(Type.Primitive.BOOLEAN));
-
-        TypedNode ex1tree = (TypedNode)$ex1.tree;
-        TypedNode ex2tree = (TypedNode)$ex2.tree;
-
-        if(!(ex1tree.getExprType().equals(Type.Primitive.BOOLEAN))) {
-            reporter.error(ex1tree, "Expression of type boolean expected. Found: " + ex1tree.getExprType());
-        }else if(!ex2tree.getExprType().equals(Type.Primitive.BOOLEAN)) {
-            reporter.error(ex2tree, "Expression of type boolean expected. Found: " + ex2tree.getExprType());
-        }
+        checkers.type((TypedNode)$ex1.tree, Type.Primitive.BOOLEAN);
+        checkers.type((TypedNode)$ex2.tree, Type.Primitive.BOOLEAN);
     } |
     ^(op=same_op ex1=expression ex2=expression){
         TypedNode ext1 = (TypedNode)$ex1.tree;
@@ -412,20 +364,23 @@ expression:
             log("Warning: pointer arithmetic is unchecked logic.");
             ((TypedNode)$op.tree).setExprType(ext1.getExprType());
         } else {
-            checkSameOp($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
+            checkers.equal($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
         }
     }|
     ^(op=same_bool_op ex1=expression ex2=expression){
-        checkSameOp($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
+        checkers.equal($op.tree, (TypedNode)$ex1.tree, (TypedNode)$ex2.tree);
+        ((TypedNode)$op.tree).setExprType(Type.Primitive.BOOLEAN);
+    }|
+    ^(op=same_bool_int_op ex1=expression ex2=expression){
+        checkers.type((TypedNode)$ex1.tree, Type.Primitive.INTEGER);
+        checkers.type((TypedNode)$ex2.tree, Type.Primitive.INTEGER);
         ((TypedNode)$op.tree).setExprType(Type.Primitive.BOOLEAN);
     }|
     ^(tam=TAM<TypedNode> t=type STRING_VALUE){
         ((TypedNode)$tam.tree).setExprType(((TypedNode)$t.tree).getExprType());
     }|
     ^(p=DEREFERENCE<TypedNode> ex=expression){
-        if(((TypedNode)$ex.tree).getExprType().getPrimType() != Type.Primitive.POINTER){
-            reporter.error($ex.tree, "Cannot dereference non-pointer.");
-        }
+        checkers.type((TypedNode)$ex.tree, Type.Primitive.POINTER, "Cannot dereference non-pointer.");
 
         // Dereference variable: take over inner type
         ((TypedNode)$p.tree).setExprType(((TypedNode)$ex.tree).getExprType().getInnerType());
@@ -439,45 +394,22 @@ expression:
         ));
     }|
     ^(get=GET<TypedNode> id=IDENTIFIER<IdentifierNode> ex=expression){
-        TypedNode getn = (TypedNode)$get.tree;
         IdentifierNode inode = (IdentifierNode)$id.tree;
-        TypedNode ext = (TypedNode)$ex.tree;
         inode.setRealNode(getID($id.tree, $id.text));
 
-        // We need get_from_array() to function
-        if(symtab.retrieve("get_from_array") == null){
-            reporter.error($id.tree, "Could not find get_from_array(). Did you import 'builtins/array'?");
-        }
-        
-        // Check for array type
-        if(inode.getExprType().getPrimType() != Type.Primitive.ARRAY){
-            reporter.error($ex.tree, "Expected array but found " + inode.getExprType());
-        }
+        checkers.symbol(get, "get_from_array", "builtins/math");
+        checkers.type(inode, Type.Primitive.ARRAY);
+        checkers.type((TypedNode)$ex.tree, Type.Primitive.INTEGER);
 
         // Result returns inner type of array
-        getn.setExprType(inode.getExprType().getInnerType());
-
-        // Indices must be integers
-        if(!ext.getExprType().equals(Type.Primitive.INTEGER)){
-            reporter.error($ex.tree, "Expected Type<INTEGER> but found " + ext.getExprType());
-        }
+        ((TypedNode)$get.tree).setExprType(inode.getExprType().getInnerType());
     }|
     ^(n=NOT<TypedNode> ex=expression){
-        TypedNode ext = (TypedNode)$ex.tree;
-        if(ext.getExprType().getPrimType() != Type.Primitive.BOOLEAN){
-            reporter.error($ex.tree, "Expected Type<BOOLEAN> but found " + ext.getExprType());
-        }
+        checkers.type((TypedNode)$ex.tree, Type.Primitive.BOOLEAN);
     }|
     ^(p=POWER<TypedNode> base=expression power=expression){
-        TypedNode pt = (TypedNode)$p.tree;
-        TypedNode baset = (TypedNode)$base.tree;
-        TypedNode powert = (TypedNode)$power.tree;
-        checkSameOp(pt, baset, powert);
-
-        if(symtab.retrieve("power") == null){
-            reporter.error(pt, "Could not find power(). Did you import 'builtins/math'?");
-        }
-
+        checkers.equal((TypedNode)$p.tree, (TypedNode)$base.tree, (TypedNode)$power.tree);
+        checkers.symbol((TypedNode)$p.tree, "power", "builtins/math");
     };
 
 type:
@@ -504,9 +436,7 @@ composite_type:
         ));
 
         // We need alloc/free for declaration
-        if(symtab.retrieve("alloc") == null){
-            reporter.error($size.tree, "Could not find alloc(). Did you import 'builtins/heap'?");
-        }
+        checkers.symbol($size.tree, "alloc", "builtins/heap");
     }|
     ^(a=DEREFERENCE<TypedNode> t=type){
         ((TypedNode)$a.tree).setExprType(new Type(

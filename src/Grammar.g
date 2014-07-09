@@ -43,13 +43,16 @@ tokens {
 
     // Pointers
     AMPERSAND = '&'; // Reference
+
+    // Non-keywords but used in AST
+    THEN = '__then__';
     DEREFERENCE = '__dereference__node__';
+    ARRAY = '__array__';
 
     // keywords
     PROGRAM = 'program';
     SWAP = 'swap';
     IF = 'if';
-    THEN = 'then';
     ELSE = 'else';
     DO = 'do';
     WHILE = 'while';
@@ -60,11 +63,8 @@ tokens {
     FALSE = 'false';
     CONTINUE = 'continue';
     RETURN = 'return';
-    FOR = 'for';
-    IN = 'in';
     RETURNS = 'returns';
     FUNC = 'func';
-    ARRAY = 'array';
     ARGS = 'args';
     CALL = 'call';
     VAR = 'var';
@@ -93,11 +93,9 @@ tokens {
 program: command+ -> ^(PROGRAM command+);
 
 command:
-    // Antlr complains about being able to match multiple alternatives for 'ASTERIX' even though we prioritise
-    // it below. Antlr then goes on and tells us it disabled rule 5 and 6, which is exactly what we wanted
-    // to achieve with the line below in the first place. Oh well..
+    // Antlr complains about being able to match multiple alternatives for 'MULT', which is correct.
     //
-    // @Theo (or PA): we can solve this by either instructing antlr to ignore 5/6 if ASTERIX is matched (what
+    // @Theo (or PA): we can solve this by either instructing antlr to ignore 5/6 if MULT is matched (what
     // essentially happens now) or by separating `expression` into `expression` and `inline_expression`
     // which is its own horror. All in all, we think letting antlr figure it out on its own is not a clean
     // solution but nonetheless a consciously chosen one.
@@ -126,8 +124,7 @@ scope_declaration:
     func_declaration; // |
 //    class_declaration;
 
-func_declaration: FUNC IDENTIFIER LPAREN arguments? RPAREN (RETURNS t=type)? LCURLY commands? RCURLY
-                      -> {t == null}? ^(FUNC IDENTIFIER<FunctionNode> IDENTIFIER<IdentifierNode>["auto"] ^(ARGS arguments?) ^(BODY commands?))
+func_declaration: FUNC IDENTIFIER LPAREN arguments? RPAREN RETURNS t=type LCURLY commands? RCURLY
                       -> ^(FUNC IDENTIFIER<FunctionNode> type ^(ARGS arguments?) ^(BODY commands?));
 
 
@@ -140,7 +137,6 @@ statement:
     if_statement | 
     while_statement |
     return_statement |
-    for_statement |
     print_statement |
     import_statement |
 
@@ -161,8 +157,6 @@ if_statement: if_part ep=else_part?
 
 while_statement: WHILE LPAREN expression RPAREN LCURLY command* RCURLY
                      -> ^(WHILE expression command*);
-for_statement: FOR IDENTIFIER IN expression LCURLY commands? RCURLY
-                   -> ^(FOR IDENTIFIER<IdentifierNode> expression commands?);
 
 return_statement: RETURN expression SEMICOLON -> ^(RETURN expression);
 

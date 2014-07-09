@@ -52,7 +52,9 @@ statement:
     while_statement |
     return_statement |
     if_statement |
-    print_statement;
+    print_statement |
+    break_statement |
+    continue_statement;
 
 if_statement
 @init{ int ix = input.index(); }:
@@ -86,6 +88,13 @@ while_statement
         emitter.emitLabel("AFTER", ix);
     };
 
+break_statement: b=BREAK{
+
+};
+
+continue_statement: c=CONTINUE{
+
+};
 
 // Already handled in function/program declaration
 var_declaration: 
@@ -201,6 +210,12 @@ operand returns [CommonNode value]:
     } |
     s=STRING_VALUE{
         emitter.emit("LOADL " + (int)($s.text).charAt(1));
+    } |
+    TRUE{
+        emitter.emit("LOADL 1");
+    } |
+    FALSE{
+        emitter.emit("LOADL 0");
     } |
     ^(arr=ARRAY{
         $value = arr;
