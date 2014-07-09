@@ -4,16 +4,16 @@ Om de juistheid van de compiler te garanderen, is testen essentieel. Hiertoe zij
 
 De testprogramma's geschreven in \emph{python} zijn te vinden in het bijgeleverde zip-bestand in de map \emph{tests}. De testprogramma's uit onze eigen taal in de map \emph{examples}.
 
-\section{Python programma's} % (fold)
-\label{sec:python_programma_s}
+\section{Syntax- en contexttests} % (fold)
+\label{sec:syntax_en_context}
 De python programma's testen zeer snel en effici\"ent de volledige syntax en context. Hieronder vallen zowel correcte als foute code. Als de code bewust fout gaat, wordt dit afgevangen op de correcte foutmelding. 
 
-Als al deze tests slagen is er geen noemenswaardige output. Mocht er een test wel falen, dan wordt dit getoond op de standaard output. De testprogramma's zijn te vinden in sectie \ref{sec:testverslag}.
+Als al deze tests slagen is er geen noemenswaardige output. Mocht er een test wel falen, dan wordt dit getoond op de standaard output. 
 
-% section python_programma_s (end)
+% section syntax_en_context (end)
 
-\section{Testprogramma's} % (fold)
-\label{sec:testprogramma_s}
+\section{Semantiektests}} % (fold)
+\label{sec:semantiektests}
 
 Verder wordt het volgende getest in deze correcte testprogramma's. Al deze programma's werken en leveren dus geen noemenswaardige resultaten op.
 \begin{description}
@@ -23,8 +23,9 @@ Verder wordt het volgende getest in deze correcte testprogramma's. Al deze progr
     \item[heap.kib] Het alloceren en vrijgeven van geheugen wordt hier getest. 
     \item[pointers.kib] Test de declaratie en het gebruik van pointers.
     \item[raw.kib] Het direct uitvoeren van TAM-code in de KIDEB broncode.
+    \item[all.kib] Test alle functionaliteit van de taal. Programma en ouput is te vinden in sectie \ref{sec:testverslag.
 \end{description}
-% section testprogramma_s (end)
+% section semantiektests (end)
 
 % chapter testplan_en_resultaten (end)
 \clearpage

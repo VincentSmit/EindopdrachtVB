@@ -12,16 +12,15 @@ Code
 
 Verslag
     O Inleiding (als laatste te schrijven, bewust open)
-    F Taalbeschrijving (Af, hooguit te updaten)
+    F Taalbeschrijving 
     L Problemen (Type inferentie)
-    F syntax enz. (Check of er niets vergeten ben. Basis klopt maar misschien mis ik nieuwe functionaliteit)
+    F syntax enz.
     F Vertaalregels (Moet nog digitaal, groot deel al wel op papier)
     F Java (Doorkijken aub, verder af)
-    L testplan (Python testprogramma's beschrijven)
+    L testplan (Misschien herschrijven)
     O Conclusie (als laatste, voor de inleiding, bewust open)
-    L Appendix (lexer bijwerken.Output pythontestprogramma's hier neergooien.)
+    L Appendix (lexer bijwerken.)
 
 Afronding
     - README
     - spelcheck verslag
-    - 
