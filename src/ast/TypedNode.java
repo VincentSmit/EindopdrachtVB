@@ -72,7 +72,7 @@ public class TypedNode extends CommonNode{
     /**
      * Copy node 'n'. Makes shallow copies of exprType and memAddr.
      *
-     * @ensures: getExprType() == n.getExprType() && getMemAddr() == n.memAddr;
+     * @ensures getExprType() == n.getExprType() && getMemAddr() == n.memAddr;
      */
     public TypedNode(TypedNode n) {
         super(n);
@@ -98,8 +98,8 @@ public class TypedNode extends CommonNode{
     /**
      * Set exprType property.
      *
-     * @ensures: getExprType() == type
-     * @requires: type != null
+     * @ensures getExprType() == type
+     * @requires type != null
      */
     public void setExprType(Type type) {
         this.exprType = type;
@@ -109,8 +109,8 @@ public class TypedNode extends CommonNode{
      * Convenience function: wraps given primitive in Type object and sets
      * it as exprType.
      *
-     * @requires: prim != null
-     * @ensures: getExprType().getPrimType() == prim
+     * @requires prim != null
+     * @ensures getExprType().getPrimType() == prim
      */
     public void setExprType(Type.Primitive prim){
         this.setExprType(new Type(prim));
@@ -120,8 +120,8 @@ public class TypedNode extends CommonNode{
      * Convenience function: extracts expression type of node, and sets it
      * for this function.
      *
-     * @ensures: node.getExprType() == getExprType()
-     * @requires: node != null
+     * @ensures node.getExprType() == getExprType()
+     * @requires node != null
      */
     public void setExprType(TypedNode node){
         this.setExprType(node.getExprType());
@@ -130,8 +130,8 @@ public class TypedNode extends CommonNode{
     /**
      * Sets property memAddr
      *
-     * @ensures: getMemAddr() == p
-     * @requires: p != null
+     * @ensures getMemAddr() == p
+     * @requires p != null
      */
     public void setMemAddr(Pair<Integer, Integer> p){
         this.memAddr = p;

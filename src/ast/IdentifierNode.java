@@ -36,7 +36,7 @@ public class IdentifierNode extends TypedNode{
     /**
      * Copies given node.
      *
-     * @ensures: this.scope == n.scope && this.realNode == n.realNode
+     * @ensures this.scope == n.scope && this.realNode == n.realNode
      */
     public IdentifierNode(IdentifierNode n) {
         super(n);
@@ -105,8 +105,8 @@ public class IdentifierNode extends TypedNode{
     /**
      * Sets realNode property
      *
-     * @requires: node != null
-     * @ensures: this.getRealNode() is node.getRealNode()
+     * @requires node != null
+     * @ensures this.getRealNode() is node.getRealNode()
      */
     public void setRealNode(IdentifierNode node){ this.realNode = node.getRealNode(); }
 

@@ -21,9 +21,9 @@ public class Checkers{
      * through reporter. If one of the node has type "AUTO", we will assume the type
      * of the other node.
      *
-     * @param op: 'parent' expression which needs it's type set, and to report an error on
-     * @param tn1: left-side of op
-     * @param tn2: right-side of op
+     * @param op 'parent' expression which needs it's type set, and to report an error on
+     * @param tn1 left-side of op
+     * @param tn2 right-side of op
      */
     public void equal(CommonNode op, TypedNode tn1, TypedNode tn2) throws InvalidTypeException{
         // If one of the typednodes has type auto, assume type of other typednode.
@@ -47,9 +47,9 @@ public class Checkers{
      * Check for the existence of a symbol stored under 'symbolName'. If it does not exist,
      * throw an error on 'op', stating the user might need to import 'module'.
      *
-     * @param op: node to report error on
-     * @param symbolName: symbol to check existence of
-     * @param module: if symbol does not exist, which module needs to be imported?
+     * @param op node to report error on
+     * @param symbolName symbol to check existence of
+     * @param module if symbol does not exist, which module needs to be imported?
      */
     public void symbol(CommonNode op, String symbolName, String module) throws InvalidTypeException{
         if(checker.symtab.retrieve(symbolName) == null){

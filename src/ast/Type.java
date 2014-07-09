@@ -45,15 +45,15 @@ public class Type {
     private Type innerType;
 
     /**
-     * @ensures: getPrimType() == primType;
+     * @ensures getPrimType() == primType;
      */
     public Type(Primitive primType){
         this.primType = primType;
     }
 
     /**
-     * @ensures: getPrimType() == primType;
-     * @ensures: getInnerType() == innerType;
+     * @ensures getPrimType() == primType;
+     * @ensures getInnerType() == innerType;
      */
     public Type(Primitive primType, Type innerType){
         this.primType = primType;
@@ -70,7 +70,7 @@ public class Type {
     /**
      * Sets innerType property
      *
-     * @ensures: getInnerType() == innerType
+     * @ensures getInnerType() == innerType
      */
     public void setInnerType(Type innerType) {
         this.innerType = innerType;
@@ -95,8 +95,8 @@ public class Type {
     /**
      * Test Type objects for equality. Objects with type AUTO are never equal.
      *
-     * @param other: type to compare with
-     * @return: result of equality test
+     * @param other type to compare with
+     * @return result of equality test
      */
     public boolean equals(Type other){
         return equals(other, false);
@@ -107,8 +107,8 @@ public class Type {
      * equal. This is a convenience method, wrapping the passed primitive
      * object into a Type.
      *
-     * @param other: type to compare with
-     * @return: result of equality test
+     * @param other type to compare with
+     * @return result of equality test
      */
     public boolean equals(Primitive other){
         return equals(new Type(other));
@@ -117,9 +117,9 @@ public class Type {
     /**
      * Test Type objects for equality. Objects with type AUTO are never equal.
      *
-     * @param acceptVar: if true, 
-     * @param other: type to compare with
-     * @return: result of equality test
+     * @param acceptVar if true, 
+     * @param other type to compare with
+     * @return result of equality test
      */
     public boolean equals(Type other, boolean acceptVar){
         // Are primitive types equal?
@@ -150,7 +150,7 @@ public class Type {
      * Looks up Primitive object for given string. If no type is matched, it throws
      * and InvalidTyepException.
      *
-     * @requires: type in {"int", "bool", "char", "array", "var", "auto"}
+     * @requires type in {"int", "bool", "char", "array", "var", "auto"}
      */
     public static Primitive getPrimFromString(String type) throws InvalidTypeException{
         switch(type){
