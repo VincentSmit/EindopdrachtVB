@@ -142,8 +142,8 @@ statement:
 
     // Defining both tokens as <ControlNode>s throws a cryptic error. Converting them later
     // in GrammarChecker works :-/.
-    BREAK SEMICOLON! |
-    CONTINUE SEMICOLON!;
+    BREAK<ControlNode> SEMICOLON! |
+    CONTINUE<ControlNode> SEMICOLON!;
 
 
 if_part: IF LPAREN expression RPAREN LCURLY commands? RCURLY

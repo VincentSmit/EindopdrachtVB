@@ -19,6 +19,7 @@ options {
 @members {
     // Keep track of the 'current' function
     protected Stack<FunctionNode> funcs = new Stack<>();
+    protected Stack<Integer> loops = new Stack<>();
     protected Emitter emitter = new Emitter();
     protected Function funcUtil = new Function(this, emitter);
 
@@ -80,20 +81,21 @@ return_statement: ^(RETURN<ControlNode> expression){
 };
 
 while_statement
-@init{ int ix = input.index(); emitter.emitLabel("DO", ix); }:
+@init{ loops.push(input.index()); emitter.emitLabel("DO", loops.peek()); }:
     ^(WHILE expression {
-        emitter.emit("JUMPIF(0) AFTER" + ix + "[CB]");
+        emitter.emit("JUMPIF(0) AFTER" + loops.peek() + "[CB]");
     } command*){
-        emitter.emit("JUMP DO" + ix + "[CB]");
-        emitter.emitLabel("AFTER", ix);
+        emitter.emit("JUMP DO" + loops.peek() + "[CB]");
+        emitter.emitLabel("AFTER", loops.peek());
+        loops.pop();
     };
 
 break_statement: b=BREAK{
-
+    emitter.emit("JUMP AFTER" + loops.peek() + "[CB]");
 };
 
 continue_statement: c=CONTINUE{
-
+    emitter.emit("JUMP DO" + loops.peek() + "[CB]");
 };
 
 // Already handled in function/program declaration
