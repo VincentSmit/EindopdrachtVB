@@ -33,5 +33,16 @@ map aangegeven waar het voor dient.
 * _verslag_: eindverslag
 
 ## Uitvoeren van tests
+Afhankelijkheden:
+ * `java`: >= 1.7
+ * `javac`: >= 1.7
+ * `python`: >= 2.7
+
+`bash
+cd tests/
+python grammar.py
+python checker.py
+python generator.py
+`
 
 ## Uitvoeren van voorbeeldprogramma's
