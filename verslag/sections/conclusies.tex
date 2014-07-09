@@ -1,5 +1,12 @@
 \chapter{Conclusies} % (fold)
 \label{cha:conclusies}
+Ondanks de beperkte mogelijkheden is er een leuke expressietaal gebouwd. Er zijn de nodige functies ge\"implementeerd bovenop de basisfunctionaliteit, welke de taal een stuk krachtiger maken. Hier zaten een aantal uitdagende problemen in, die allen opgelost zijn.
+
+De taal is gedefinieerd als een LL(1) grammatica, op een enkele, lokale uitzondering na. Door stellen van context-eisen en de uitleg van de semantiek is de grammatica bruikbaar als programmeertaal. Op basis van de vertaalregels is broncode geschreven in KIDEB ook compileerbaar naar TAM-instructies, waardoor deze uitgevoerd kan worden op een TAM-machine. De controle van de syntax en context en de codegeneratie zijn gedefineerd in het ANTLR-framework.
+
+KIDEB is ook vrij uitgebreid getest door in \emph{python} geschreven unittests. Het overgrote deel van de bugs die in de taal zaten is hiermee gevonden en verholpen. 
+
+Kortom, KIDEB is een kleine maar aardige taal, voortgekomen uit een leuk project van de Technische Informatica bachelor.
 
 % chapter conclusies (end)
 \clearpage
