@@ -19,7 +19,7 @@ Verslag
     F Java
     F Testplan 
     F Conclusie 
-    L Appendix (lexer bijwerken.)
+    L Appendix (wachten op het groote testbestand met output)
 
 Afronding
     - README
