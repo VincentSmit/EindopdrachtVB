@@ -46,3 +46,19 @@ python generator.py
 ```
 
 ## Uitvoeren van voorbeeldprogramma's
+Het uitvoeren van programma's kan door middel van `run_as_tam.py`, op de volgende manier:
+`python run_as_tam.py [options] [filename]`. De volgende opties zijn beschikbaar:
+
+ * `--compile` Compileert java bestanden met behulp van `javac`. Dit is een flag die slechts
+   eenamlig nodig is wanneer geen broncode veranderd wordt.
+ * `--hush` Voorkomt dat de AST en TAM code naar de console worden geprint. Eventuele foutmeldingen
+   worden wel geprint.
+
+**LET OP** Bij het compileren genereert antlr waarschuwingen:
+
+```
+warning(200): /home/s1204254/code/vb2/tests/../src/Grammar.g:95:8: 
+Decision can match input such as "MULT" using multiple alternatives: 5, 6
+```
+
+Dit is normaal gedrag en is gedocumenteerd in `src/Grammar.g`:`95`.
