@@ -38,11 +38,11 @@ Afhankelijkheden:
  * `javac`: >= 1.7
  * `python`: >= 2.7
 
-`bash
+```bash
 cd tests/
 python grammar.py
 python checker.py
 python generator.py
-`
+```
 
 ## Uitvoeren van voorbeeldprogramma's
