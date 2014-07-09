@@ -13,9 +13,14 @@ size_of_array:           PUSH 1
 size_of_arrayafter:      JUMP haltafter[CB]
 halt:                    HALT
                          RETURN (1) 0                  ; Return and pop arguments
-haltafter:               JUMP get_from_arrayafter[CB]
+haltafter:               JUMP _printcafter[CB]
+_printc:                 LOAD (1) -1[LB]
+        CALL put
+        LOADL 0
+                         RETURN (1) 1                  ; Return and pop arguments
+_printcafter:            JUMP get_from_arrayafter[CB]
 get_from_array:          PUSH 0                        ; NOP for secondary label
-IF81:                    LOAD(1) -1[LB]                ; index
+IF102:                   LOAD(1) -1[LB]                ; index
                          LOADL 0
                          CALL ge
                          LOAD(1) -1[LB]                ; index
@@ -23,18 +28,47 @@ IF81:                    LOAD(1) -1[LB]                ; index
                          CALL (LB) size_of_array[CB]
                          CALL lt
                          CALL and
-                         JUMPIF (0) ELSE81[CB]
+                         JUMPIF (0) ELSE102[CB]
                          LOAD(1) -2[LB]                ; p
                          LOAD(1) -1[LB]                ; index
                          CALL add
                          LOADI(1)
                          RETURN (1) 2                  ; Return and pop arguments
-                         JUMP ENDIF81[CB]
-ELSE81:                  PUSH 0                        ; NOP for secondary label
-ENDIF81:                 LOADL 88
-                         CALL putint
-                         LOADL 10                      ; Print newline
-                         CALL put
+                         JUMP ENDIF102[CB]
+ELSE102:                 PUSH 0                        ; NOP for secondary label
+ENDIF102:                LOADL 73
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 110
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 100
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 101
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 120
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 69
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 114
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 114
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 111
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 114
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
+                         LOADL 10
+                         CALL (LB) _printc[CB]
+                         POP(0) 1                      ; Pop (unused) result of expression
                          CALL (LB) halt[CB]
                          POP(0) 1                      ; Pop (unused) result of expression
 get_from_arrayafter:     JUMP allocafter[CB]
