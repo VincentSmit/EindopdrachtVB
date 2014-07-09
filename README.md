@@ -34,9 +34,9 @@ map aangegeven waar het voor dient.
 
 ## Uitvoeren van tests
 Afhankelijkheden:
- * `java`: >= 1.7
- * `javac`: >= 1.7
- * `python`: >= 2.7
+ * `java` >= 1.7
+ * `javac` >= 1.7
+ * `python` >= 2.7
 
 ```bash
 cd tests/
